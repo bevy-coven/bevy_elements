@@ -278,7 +278,10 @@ fn a_press_threshold_skips_dry_soil_and_keeps_snow() {
     let dry_gated = deepest_after_a_step(gate.clone(), 0.0, 0.0);
     let snow_gated = deepest_after_a_step(gate, SNOW_M, SNOW_SWE_M);
     println!("dry {dry_default:.4} m, dry gated {dry_gated:.4} m, snow gated {snow_gated:.4} m");
-    assert!(dry_default > 0.003, "dry soil presses by default: {dry_default}");
+    assert!(
+        dry_default > 0.003,
+        "dry soil presses by default: {dry_default}"
+    );
     assert_eq!(dry_gated, 0.0, "dry soil under a 1 cm threshold");
     assert!(
         (snow_gated - EXPECTED_DEPTH_M).abs() <= 0.03 * EXPECTED_DEPTH_M,

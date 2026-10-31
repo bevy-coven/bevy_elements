@@ -3,8 +3,8 @@
 
 use bevy::math::{IVec2, IVec3, Mat2, UVec2, Vec2, Vec3};
 
-use super::{F_HALF, R_LOW, R_SPAN};
 pub(crate) use super::surface::{generate_surface, noise_sums};
+use super::{F_HALF, R_LOW, R_SPAN};
 use crate::gpu::noise_mirror::hash33;
 use crate::terrain::ProceduralTerrain;
 
@@ -61,7 +61,8 @@ pub(crate) fn layer_weights(slope_deg: f32, sediment_m: f32, detail: f32) -> [f3
     let sand = overlay(smoothstep(0.3, 0.7, sediment_m), detail)
         * (1.0 - smoothstep(26.0, 30.0, slope_deg))
         * (1.0 - rock);
-    let band = overlay(smoothstep(16.0, 26.0, slope_deg), detail) * (1.0 - smoothstep(22.0, 29.0, slope_deg));
+    let band = overlay(smoothstep(16.0, 26.0, slope_deg), detail)
+        * (1.0 - smoothstep(22.0, 29.0, slope_deg));
     let rest = (1.0 - rock) * (1.0 - sand);
     [rock, sand, rest * band, rest * (1.0 - band)]
 }
@@ -105,7 +106,9 @@ pub(crate) const TURF_STRENGTH: f32 = 0.85;
 /// tones, which sum to one by construction, and the mixture they make.
 pub(crate) fn turf_palette(field: f32, clump: f32) -> ([f32; 3], [f32; 4]) {
     let p = 2.0f32;
-    let mut dry = (field.max(0.0) * (0.5 + clump).max(0.0) * 1.6).powf(p).min(1.0);
+    let mut dry = (field.max(0.0) * (0.5 + clump).max(0.0) * 1.6)
+        .powf(p)
+        .min(1.0);
     let mut straw = ((field - 0.45).max(0.0) * 3.0 * (0.5 + clump).max(0.0) * 1.6)
         .powf(p)
         .min(1.0);
@@ -125,10 +128,8 @@ pub(crate) fn turf_palette(field: f32, clump: f32) -> ([f32; 3], [f32; 4]) {
     let shares = [fresh, dry, straw, worn];
     let mut mixed = [0.0f32; 3];
     for c in 0..3 {
-        mixed[c] = fresh * TURF_FRESH[c]
-            + dry * TURF_DRY[c]
-            + straw * TURF_STRAW[c]
-            + worn * TURF_WORN[c];
+        mixed[c] =
+            fresh * TURF_FRESH[c] + dry * TURF_DRY[c] + straw * TURF_STRAW[c] + worn * TURF_WORN[c];
         mixed[c] = 1.0 + (mixed[c] - 1.0) * TURF_STRENGTH;
     }
     (mixed, shares)
@@ -347,9 +348,21 @@ pub(crate) fn rock_joint(p: Vec3) -> f32 {
     let inside = wesl_fract(q);
     // The wall in each axis: the far side of the cell from the feature point.
     let to_wall = Vec3::new(
-        if outward.x < 0.0 { inside.x } else { 1.0 - inside.x },
-        if outward.y < 0.0 { inside.y } else { 1.0 - inside.y },
-        if outward.z < 0.0 { inside.z } else { 1.0 - inside.z },
+        if outward.x < 0.0 {
+            inside.x
+        } else {
+            1.0 - inside.x
+        },
+        if outward.y < 0.0 {
+            inside.y
+        } else {
+            1.0 - inside.y
+        },
+        if outward.z < 0.0 {
+            inside.z
+        } else {
+            1.0 - inside.z
+        },
     );
     let half = to_wall.x.min(to_wall.y).min(to_wall.z);
     // The joint's width is a **Weibull** draw, the shape the fracture spacing's distribution
@@ -531,7 +544,11 @@ fn hex_shares(bary: Vec3) -> Vec3 {
 /// every tap fetched (`all`) or only the live ones.
 pub(crate) fn hex_tap_weights(bary: Vec3, heights: Vec3, all: bool) -> Vec3 {
     let shares = hex_shares(bary);
-    let live = if all { Vec3::ONE } else { Vec3::select(shares.cmpgt(Vec3::splat(TAP_MIN)), Vec3::ONE, Vec3::ZERO) };
+    let live = if all {
+        Vec3::ONE
+    } else {
+        Vec3::select(shares.cmpgt(Vec3::splat(TAP_MIN)), Vec3::ONE, Vec3::ZERO)
+    };
     let weighted = shares * (Vec3::ONE + (2.0 * heights - Vec3::ONE) * HEX_CONTRAST) * live;
     weighted / (weighted.x + weighted.y + weighted.z).max(1e-12)
 }
@@ -546,7 +563,11 @@ pub(crate) fn hex_tap(v: IVec2, layer: u32, st: Vec2) -> (Vec2, Mat2) {
         if k & 2 != 0 { -1.0 } else { 1.0 },
         if k & 4 != 0 { -1.0 } else { 1.0 },
     );
-    let (c0, c1) = if swap { (Vec2::Y, Vec2::X) } else { (Vec2::X, Vec2::Y) };
+    let (c0, c1) = if swap {
+        (Vec2::Y, Vec2::X)
+    } else {
+        (Vec2::X, Vec2::Y)
+    };
     let rot = Mat2::from_cols(c0 * signs, c1 * signs);
     let centre = hex_centre(v);
     (rot * (st - centre) + centre + Vec2::new(h.x, h.y), rot)
@@ -567,7 +588,8 @@ pub(crate) fn height_sharpness(footprint_m: f32) -> f32 {
 pub(crate) fn height_blend(w: Vec3, h: Vec3, sharpness: f32) -> Vec3 {
     let total = w.x + w.y + w.z;
     let lift = |h: f32| (sharpness * (h - 0.5)).exp();
-    let e = (w - Vec3::splat(DETAIL_GATE)).max(Vec3::ZERO) * Vec3::new(lift(h.x), lift(h.y), lift(h.z));
+    let e =
+        (w - Vec3::splat(DETAIL_GATE)).max(Vec3::ZERO) * Vec3::new(lift(h.x), lift(h.y), lift(h.z));
     let sum = e.x + e.y + e.z;
     if sum <= 0.0 {
         return w;
@@ -580,7 +602,11 @@ pub(crate) fn height_blend(w: Vec3, h: Vec3, sharpness: f32) -> Vec3 {
 pub(crate) fn grain_share(b: Vec3, tile: Vec3, grain: f32) -> f32 {
     let kept = Vec3::select(tile.cmpgt(Vec3::ZERO), Vec3::splat(grain), Vec3::ONE);
     let total = b.x + b.y + b.z;
-    if total > 1e-6 { b.dot(kept) / total } else { 1.0 }
+    if total > 1e-6 {
+        b.dot(kept) / total
+    } else {
+        1.0
+    }
 }
 
 #[cfg(test)]
@@ -659,7 +685,8 @@ mod tests {
         // percentile, and none is degenerate.
         assert!(
             p90 > p10 * 1.25,
-            "the beds' thicknesses span only {:.2}:1", p90 / p10
+            "the beds' thicknesses span only {:.2}:1",
+            p90 / p10
         );
         assert!(p10 > 0.35, "the beds' thicknesses are bounded: {p10}");
         // The beds *stack*: the boundaries are increasing, so every bed is above the one below
@@ -845,7 +872,9 @@ mod tests {
                 let max = t.x.max(t.y).max(t.z);
                 let min = t.x.min(t.y).min(t.z);
                 let d = max - min;
-                if d < 1e-6 { return 0.0; }
+                if d < 1e-6 {
+                    return 0.0;
+                }
                 let h = if max == t.x {
                     ((t.y - t.z) / d).rem_euclid(6.0)
                 } else if max == t.y {
@@ -1084,7 +1113,8 @@ mod tests {
         // The areas span at least 4:1 between the tenth and the ninetieth percentile.
         assert!(
             p90 > p10 * 4.0,
-            "the stones' areas span only {:.1}:1", p90 / p10
+            "the stones' areas span only {:.1}:1",
+            p90 / p10
         );
         // The stones are spread inside their cells: the mean offset is near the middle, and
         // the offsets are not all the same point.
@@ -1128,10 +1158,11 @@ mod tests {
         assert!(w[0] < 0.1, "the rock has not begun at 28 degrees: {:?}", w);
         // The band is an *apron*, not a contour line: it is at least six degrees wide at
         // half its strength, or it traces the hillside's break as a line.
-        let wide = (14..42)
-            .filter(|d| scree_weight(*d as f32) > 0.5)
-            .count();
-        assert!(wide >= 6, "the scree's band is {wide} degrees wide, too narrow");
+        let wide = (14..42).filter(|d| scree_weight(*d as f32) > 0.5).count();
+        assert!(
+            wide >= 6,
+            "the scree's band is {wide} degrees wide, too narrow"
+        );
     }
 
     /// The turf's palette: the four tones' shares must sum to one by construction (so the
@@ -1179,7 +1210,10 @@ mod tests {
         // A place with no dry tone is exactly the turf's own colour.
         let (mixed, _) = turf_palette(0.0, 0.0);
         for c in mixed {
-            assert!((c - 1.0).abs() < 1e-5, "the fresh tone is not the identity: {mixed:?}");
+            assert!(
+                (c - 1.0).abs() < 1e-5,
+                "the fresh tone is not the identity: {mixed:?}"
+            );
         }
     }
 
@@ -1343,11 +1377,17 @@ mod tests {
         // (measured: 0.32 % of the frame).
         let soil = layer_weights(21.0, 0.0, 0.5)[2];
         assert!((0.3..0.7).contains(&soil), "soil at 21°: {soil}");
-        assert!(layer_weights(31.0, 0.0, 0.5)[2] < 0.4, "the soil must be gone by 31°");
+        assert!(
+            layer_weights(31.0, 0.0, 0.5)[2] < 0.4,
+            "the soil must be gone by 31°"
+        );
         // The taper: the soil thins as the rock rises, so the grass meets the stone without a
         // warm brown rim (measured: 1415 orange pixels at RGB 148, 121, 100 in one frame, and
         // none after).
-        assert!(layer_weights(28.0, 0.0, 0.5)[2] < 0.35, "the soil must taper into the rock");
+        assert!(
+            layer_weights(28.0, 0.0, 0.5)[2] < 0.35,
+            "the soil must taper into the rock"
+        );
         // Fully on or off stays put under any detail: rock at 50°, grass at 10°.
         for d in [0.0, 0.3, 0.7, 1.0] {
             assert_eq!(layer_weights(50.0, 0.0, d)[0], 1.0);
@@ -1360,11 +1400,17 @@ mod tests {
         // The rock's ramp starts at 30°, so a slope is already half rock at 34°: the ground's
         // turf is the crate's 2D noise in the world XZ plane, and it must be gone before the
         // surface is steep enough to weave it (`rock-material.md` Model 1).
-        assert!(layer_weights(34.0, 0.0, 0.5)[0] > 0.3, "the rock must be there by 34°");
+        assert!(
+            layer_weights(34.0, 0.0, 0.5)[0] > 0.3,
+            "the rock must be there by 34°"
+        );
         // The ramp is narrow on purpose: a wide one has the rock's *partial* weight mixing
         // with the soil's, and a warm brown mixed with a cool grey is a pink patch (measured:
         // 9.67 % of the mountain's frame was pink before, 0.01 % after).
-        assert!(layer_weights(31.0, 0.0, 0.5)[0] < 0.2, "the rock must not creep below 30°");
+        assert!(
+            layer_weights(31.0, 0.0, 0.5)[0] < 0.2,
+            "the rock must not creep below 30°"
+        );
     }
 
     /// The ground's large-scale variation must reach a **plain**, where the soil's weight is
@@ -1386,8 +1432,7 @@ mod tests {
             let field = crate::gpu::noise_mirror::perlin3_d(
                 p / LAYER_VARIATION_M + crate::gpu::noise_mirror::seed_offset(71),
             )
-            .x
-                / NOISE_RMS;
+            .x / NOISE_RMS;
             let w = layer_variation(field, plain);
             assert!(
                 (w.iter().sum::<f32>() - 1.0).abs() < 1e-5,
@@ -1409,10 +1454,10 @@ mod tests {
         // not move them.
         let steep = layer_weights(50.0, 0.0, 0.5);
         let field = crate::gpu::noise_mirror::perlin3_d(
-            Vec3::new(30.0, 0.0, 0.0) / LAYER_VARIATION_M + crate::gpu::noise_mirror::seed_offset(71),
+            Vec3::new(30.0, 0.0, 0.0) / LAYER_VARIATION_M
+                + crate::gpu::noise_mirror::seed_offset(71),
         )
-        .x
-            / NOISE_RMS;
+        .x / NOISE_RMS;
         let w = layer_variation(field, steep);
         assert_eq!(w[0], 1.0, "the variation moved the rock");
     }
@@ -1440,7 +1485,10 @@ mod tests {
     #[test]
     fn the_hex_weights_are_the_points_barycentric_coordinates() {
         for i in 0..2000 {
-            let st = Vec2::new(i as f32 * 0.013_7 - 13.0, (i * 7919 % 2000) as f32 * 0.011_3 - 11.0);
+            let st = Vec2::new(
+                i as f32 * 0.013_7 - 13.0,
+                (i * 7919 % 2000) as f32 * 0.011_3 - 11.0,
+            );
             let (v, w) = hex_grid(st);
             assert!(w.min_element() >= -1e-6, "{st}: a negative weight {w}");
             assert!((w.x + w.y + w.z - 1.0).abs() < 1e-5, "{st}: weights {w}");
@@ -1461,7 +1509,10 @@ mod tests {
         };
         let mut skipped = 0;
         for i in 0..4000 {
-            let st = Vec2::new(i as f32 * 0.009_1 - 18.0, (i * 7919 % 4000) as f32 * 0.008_3 - 16.0);
+            let st = Vec2::new(
+                i as f32 * 0.009_1 - 18.0,
+                (i * 7919 % 4000) as f32 * 0.008_3 - 16.0,
+            );
             let (_, bary) = hex_grid(st);
             for _ in 0..4 {
                 let heights = Vec3::new(next(), next(), next());
@@ -1471,10 +1522,17 @@ mod tests {
                 for k in 0..3 {
                     if shares[k] <= TAP_MIN {
                         skipped += 1;
-                        assert!(full[k] <= 0.005, "{st} {heights}: a skipped tap weighed {}", full[k]);
+                        assert!(
+                            full[k] <= 0.005,
+                            "{st} {heights}: a skipped tap weighed {}",
+                            full[k]
+                        );
                     }
                 }
-                assert!((full - cut).abs().max_element() <= 0.005, "{st}: {full} against {cut}");
+                assert!(
+                    (full - cut).abs().max_element() <= 0.005,
+                    "{st}: {full} against {cut}"
+                );
             }
         }
         assert!(skipped > 4000, "the cut-off skips taps: {skipped}");
@@ -1510,14 +1568,26 @@ mod tests {
     #[test]
     fn the_height_blend_keeps_the_ground_and_starts_at_the_gate() {
         let w = Vec3::new(0.0, 0.3, 0.5);
-        for h in [Vec3::new(0.5, 0.2, 0.9), Vec3::new(0.5, 0.9, 0.1), Vec3::splat(0.5)] {
+        for h in [
+            Vec3::new(0.5, 0.2, 0.9),
+            Vec3::new(0.5, 0.9, 0.1),
+            Vec3::splat(0.5),
+        ] {
             let b = height_blend(w, h, HEIGHT_BLEND);
             assert!((b.x + b.y + b.z - 0.8).abs() < 1e-6, "{h}: {b}");
         }
-        let b = height_blend(Vec3::new(0.0, 0.5, 0.5), Vec3::new(0.5, 0.9, 0.2), HEIGHT_BLEND);
+        let b = height_blend(
+            Vec3::new(0.0, 0.5, 0.5),
+            Vec3::new(0.5, 0.9, 0.2),
+            HEIGHT_BLEND,
+        );
         assert!(b.y > 0.95, "the taller soil shows: {b}");
         let tall = Vec3::new(1.0, 0.5, 0.5);
-        let at_gate = height_blend(Vec3::new(DETAIL_GATE, 0.0, 1.0 - DETAIL_GATE), tall, HEIGHT_BLEND);
+        let at_gate = height_blend(
+            Vec3::new(DETAIL_GATE, 0.0, 1.0 - DETAIL_GATE),
+            tall,
+            HEIGHT_BLEND,
+        );
         assert_eq!(at_gate.x, 0.0, "{at_gate}");
         let above = height_blend(
             Vec3::new(DETAIL_GATE + 1e-4, 0.0, 1.0 - DETAIL_GATE - 1e-4),
@@ -1542,7 +1612,10 @@ mod tests {
         let near = height_sharpness(0.002);
         let a = height_blend(w, Vec3::new(0.5, 0.55, 0.45), near);
         let b = height_blend(w, Vec3::new(0.5, 0.45, 0.55), near);
-        assert!(a.y > b.y + 0.3, "near: the taller layer shows ({a} against {b})");
+        assert!(
+            a.y > b.y + 0.3,
+            "near: the taller layer shows ({a} against {b})"
+        );
     }
 
     /// A layer the set leaves untextured (tile zero) keeps the whole procedural grain, so the
@@ -1555,6 +1628,10 @@ mod tests {
         assert!((grain_share(Vec3::new(0.0, 0.2, 0.7), set, 0.3) - 0.3).abs() < 1e-6);
         assert!((grain_share(Vec3::new(0.5, 0.0, 0.5), set, 0.3) - 0.65).abs() < 1e-6);
         assert!((grain_share(Vec3::new(0.5, 0.0, 0.5), Vec3::splat(2.0), 0.3) - 0.3).abs() < 1e-6);
-        assert_eq!(grain_share(Vec3::ZERO, set, 0.3), 1.0, "no ground: no change");
+        assert_eq!(
+            grain_share(Vec3::ZERO, set, 0.3),
+            1.0,
+            "no ground: no change"
+        );
     }
 }

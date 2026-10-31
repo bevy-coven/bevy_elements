@@ -970,12 +970,7 @@ mod tests {
         };
         let metres = view_scale(Some(&orthographic(18.0)), 100.0, 40.0, &U);
         // `footprint_m` is already in metres (the caller converts with the same units).
-        let in_feet = view_scale(
-            Some(&orthographic(18.0 * 3.280_84)),
-            100.0,
-            40.0,
-            &feet,
-        );
+        let in_feet = view_scale(Some(&orthographic(18.0 * 3.280_84)), 100.0, 40.0, &feet);
         assert_eq!(metres, in_feet);
     }
 

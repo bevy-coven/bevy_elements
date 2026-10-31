@@ -8,8 +8,8 @@ use bevy::math::{IVec2, IVec3, UVec3, Vec2, Vec3};
 /// scatter of fragments and not a mosaic.
 const CELL_INSET: f32 = 0.0;
 
-pub(crate) use super::perlin::{hash31, hash33, perlin3_d};
 use super::perlin::{NOISE_PERIOD, lattice_gradient};
+pub(crate) use super::perlin::{hash31, hash33, perlin3_d};
 
 pub(crate) fn seed_offset(k: u32) -> Vec3 {
     Vec3::new(
@@ -196,25 +196,25 @@ pub(crate) fn cell3(p: Vec3) -> Cell3 {
                         continue;
                     }
                     let o = IVec3::new(x, y, z);
-                // The cell is pruned by the distance to its nearest corner: a feature point
-                // lies inside its cell, so a cell whose corner is further than the best
-                // distance so far cannot hold a closer one. The bound is exact, so the result
-                // is the same as the full search.
-                let lo = (o.as_vec3() - f).abs().max((f - o.as_vec3() - 1.0).abs());
-                if lo.dot(lo) >= best {
-                    continue;
-                }
-                let c = (i + o) & IVec3::splat(NOISE_PERIOD - 1);
-                let h = hash33(c);
-                // The point's offset inside its cell is drawn towards the cell's centre, so
-                // the cells are **unequal**: a point near its cell's corner leaves a big cell
-                // behind it and a point at the centre a small one. A cell network's cells are
-                // the same size when the points sit on a lattice, and a face of equal cells is
-                // a mosaic (`noise.wesl`'s `CELL_INSET`).
-                let inset = h.lerp(Vec3::splat(0.5), CELL_INSET);
-                let point = o.as_vec3() + inset;
-                let d = point - f;
-                let d2 = d.dot(d);
+                    // The cell is pruned by the distance to its nearest corner: a feature point
+                    // lies inside its cell, so a cell whose corner is further than the best
+                    // distance so far cannot hold a closer one. The bound is exact, so the result
+                    // is the same as the full search.
+                    let lo = (o.as_vec3() - f).abs().max((f - o.as_vec3() - 1.0).abs());
+                    if lo.dot(lo) >= best {
+                        continue;
+                    }
+                    let c = (i + o) & IVec3::splat(NOISE_PERIOD - 1);
+                    let h = hash33(c);
+                    // The point's offset inside its cell is drawn towards the cell's centre, so
+                    // the cells are **unequal**: a point near its cell's corner leaves a big cell
+                    // behind it and a point at the centre a small one. A cell network's cells are
+                    // the same size when the points sit on a lattice, and a face of equal cells is
+                    // a mosaic (`noise.wesl`'s `CELL_INSET`).
+                    let inset = h.lerp(Vec3::splat(0.5), CELL_INSET);
+                    let point = o.as_vec3() + inset;
+                    let d = point - f;
+                    let d2 = d.dot(d);
                     if d2 < best {
                         best = d2;
                         best_point = point;

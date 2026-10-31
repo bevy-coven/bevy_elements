@@ -11,11 +11,15 @@ use bevy::pbr::{DistanceFog, FogFalloff};
 use bevy::prelude::*;
 use bevy::render::render_resource::{Extent3d, ShaderType, TextureDimension, TextureFormat};
 
-use crate::celestial::{CelestialFrame, CloudLight, SunState, cloud_light, dusk_tint, scene_illuminance};
+use crate::celestial::{
+    CelestialFrame, CloudLight, SunState, cloud_light, dusk_tint, scene_illuminance,
+};
 use crate::climate::{Weather, WeatherDirector, WeatherPreset};
 use crate::clouds::{CloudShadows, CloudWeatherMap};
 use crate::gpu::grid::storage_volume;
-use crate::plugin::{ElementsCamera, ElementsSystems, ElementsUnits, ElementsView, ensure_gpu_core};
+use crate::plugin::{
+    ElementsCamera, ElementsSystems, ElementsUnits, ElementsView, ensure_gpu_core,
+};
 use crate::precipitation::model::{
     marshall_palmer_lambda, precipitation_split, rain_extinction, snow_extinction,
     water_weighted_fall_speed,
@@ -622,7 +626,10 @@ mod tests {
                 extinction: f,
                 inscattering: fi,
             },
-        ) = (metres, falloff_in_world_units(distance_fog_falloff(300.0), feet))
+        ) = (
+            metres,
+            falloff_in_world_units(distance_fog_falloff(300.0), feet),
+        )
         else {
             unreachable!("distance fog is atmospheric");
         };

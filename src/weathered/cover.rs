@@ -87,10 +87,19 @@ impl CoverBand {
         if amount == 0.0 {
             return 0.0;
         }
-        let angle = normal.normalize_or_zero().y.clamp(-1.0, 1.0).acos().to_degrees();
+        let angle = normal
+            .normalize_or_zero()
+            .y
+            .clamp(-1.0, 1.0)
+            .acos()
+            .to_degrees();
         let slope = ramp(self.max_slope_deg - angle, self.slope_soft_deg);
-        let above = self.min_height_m.map_or(1.0, |lo| ramp(height_m - lo, self.height_soft_m));
-        let below = self.max_height_m.map_or(1.0, |hi| ramp(hi - height_m, self.height_soft_m));
+        let above = self
+            .min_height_m
+            .map_or(1.0, |lo| ramp(height_m - lo, self.height_soft_m));
+        let below = self
+            .max_height_m
+            .map_or(1.0, |hi| ramp(hi - height_m, self.height_soft_m));
         amount * slope * above * below
     }
 
@@ -217,7 +226,11 @@ mod tests {
         assert_eq!(band.coverage(up, 15.0), 1.0);
         assert_eq!(band.coverage(up, 19.0), 0.5);
         assert_eq!(band.coverage(up, 21.0), 0.0);
-        assert_eq!(band.coverage(up * 7.0, 15.0), 1.0, "the normal's length does not matter");
+        assert_eq!(
+            band.coverage(up * 7.0, 15.0),
+            1.0,
+            "the normal's length does not matter"
+        );
     }
 
     #[cfg(feature = "serde")]

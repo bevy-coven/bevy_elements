@@ -345,7 +345,10 @@ fn a_surface_cover_weathers_a_dry_scene() {
         max_diff(snowy, plain_snow) <= 1,
         "cover snow: {snowy:?} vs plain {plain_snow:?}"
     );
-    assert!(snowy[0] > dry[0] + 20, "snow is brighter: {snowy:?} vs {dry:?}");
+    assert!(
+        snowy[0] > dry[0] + 20,
+        "snow is brighter: {snowy:?} vs {dry:?}"
+    );
 
     // The cube's top is 6 m up: a ceiling below it leaves the top bare.
     rig.set_cover(Some(SurfaceCover {

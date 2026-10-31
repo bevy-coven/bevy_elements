@@ -207,7 +207,8 @@ impl TerrainSnapshot {
     /// Unit upward surface normal at `p` (metre-frame XZ), from the same
     /// [`gradient`](Self::gradient). `None` outside the grid.
     pub(crate) fn normal(&self, p: Vec2) -> Option<Vec3> {
-        self.gradient(p).map(|g| Vec3::new(-g.x, 1.0, -g.y).normalize())
+        self.gradient(p)
+            .map(|g| Vec3::new(-g.x, 1.0, -g.y).normalize())
     }
 
     /// Where the ray from `origin` along the unit `dir` (metre frame) first meets the ground,

@@ -535,15 +535,16 @@ pub(super) fn update_materials(
     );
     let (trail_window, trail_light, field) = trail_inputs(trails.as_deref(), live);
     let (ground, colours, ground_maps) = ground_inputs(&textures, &images);
-    let (path_lane, path_map) = paths
-        .as_ref()
-        .filter(|p| images.contains(&p.mask))
-        .map_or((Vec4::ZERO, None), |p| {
-            (
-                p.origin.extend(p.texel_m).extend(p.texels as f32),
-                Some(p.mask.clone()),
-            )
-        });
+    let (path_lane, path_map) =
+        paths
+            .as_ref()
+            .filter(|p| images.contains(&p.mask))
+            .map_or((Vec4::ZERO, None), |p| {
+                (
+                    p.origin.extend(p.texel_m).extend(p.texels as f32),
+                    Some(p.mask.clone()),
+                )
+            });
     let path_scale = paths
         .as_ref()
         .filter(|p| images.contains(&p.mask))

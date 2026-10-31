@@ -155,8 +155,6 @@ pub struct PathState {
 /// resolves about 8 cm of it, which is finer than the edge fade.
 pub const PATH_DISTANCE_RANGE_M: f32 = 8.0;
 
-
-
 /// The least edge fade a path's coverage uses, m: the turf thins over this much ground at a path's
 /// edge. On a coarse mask it is also what antialiases the edge.
 pub const PATH_EDGE_FADE_M: f32 = 0.12;
@@ -259,7 +257,10 @@ pub(crate) fn rasterise(paths: &[Path], origin: Vec2, texel_m: f32, texels: u32)
             hi = hi.max(p.xz());
         }
         let to_texel = |p: Vec2| (p - origin) / texel_m;
-        let (lo, hi) = (to_texel(lo - Vec2::splat(margin)), to_texel(hi + Vec2::splat(margin)));
+        let (lo, hi) = (
+            to_texel(lo - Vec2::splat(margin)),
+            to_texel(hi + Vec2::splat(margin)),
+        );
         let (x0, y0) = (lo.x.floor() as i32, lo.y.floor() as i32);
         let (x1, y1) = (
             (hi.x.ceil() as i32).min(texels as i32 - 1),
@@ -575,7 +576,8 @@ fn rasterise_paths(
     let texel_m = extent_m / texels as f32;
     let paths = network.paths.clone();
     runtime.task = Some(
-        AsyncComputeTaskPool::get().spawn(async move { rasterise(&paths, origin, texel_m, texels) }),
+        AsyncComputeTaskPool::get()
+            .spawn(async move { rasterise(&paths, origin, texel_m, texels) }),
     );
 }
 
@@ -689,7 +691,10 @@ mod tests {
         let right = sample(&mask, Vec2::new(0.0, 0.6));
         assert!((left[2] + 0.6).abs() < 0.05, "left {left:?}");
         assert!((right[2] - 0.6).abs() < 0.05, "right {right:?}");
-        assert!((left[2].abs() - 0.0).abs() > 0.3, "the centre is not a wheel line");
+        assert!(
+            (left[2].abs() - 0.0).abs() > 0.3,
+            "the centre is not a wheel line"
+        );
         // The centre's offset is zero, and the rut depth rides the kind's fraction.
         let centre = sample(&mask, Vec2::ZERO);
         assert!(centre[2].abs() < 0.05, "{centre:?}");
@@ -709,8 +714,14 @@ mod tests {
         let b = rasterise(&[road(), lane], Vec2::splat(-32.0), 0.5, 128);
         assert_eq!(a, b, "the rasteriser is deterministic");
         // Far up the lane it is the lane's surface; far along the road it is the road's.
-        assert_eq!(PathMask::kind_and_depth(sample(&a, Vec2::new(0.0, 15.0))[1]).0, 0.0);
-        assert_eq!(PathMask::kind_and_depth(sample(&a, Vec2::new(15.0, 0.0))[1]).0, 1.0);
+        assert_eq!(
+            PathMask::kind_and_depth(sample(&a, Vec2::new(0.0, 15.0))[1]).0,
+            0.0
+        );
+        assert_eq!(
+            PathMask::kind_and_depth(sample(&a, Vec2::new(15.0, 0.0))[1]).0,
+            1.0
+        );
     }
 
     #[test]
@@ -738,14 +749,22 @@ mod tests {
             let tx = ((p.x - mask.origin.x) / mask.texel_m).floor() as usize;
             let ty = ((p.y - mask.origin.y) / mask.texel_m).floor() as usize;
             let i = ty * n + tx;
-            let texel = [data[4 * i], data[4 * i + 1], data[4 * i + 2], data[4 * i + 3]];
+            let texel = [
+                data[4 * i],
+                data[4 * i + 1],
+                data[4 * i + 2],
+                data[4 * i + 3],
+            ];
             let got = decode(texel);
             let want = mask.texels_data[i];
             assert!(
                 (got[0] - want[0]).abs() <= PATH_DISTANCE_RANGE_M / 128.0 + 1e-3,
                 "distance {got:?} against {want:?}"
             );
-            assert!((got[2] - want[2]).abs() <= 0.05, "lateral {got:?} against {want:?}");
+            assert!(
+                (got[2] - want[2]).abs() <= 0.05,
+                "lateral {got:?} against {want:?}"
+            );
             assert!((got[3] - want[3]).abs() <= 1.0 / 255.0, "grain {got:?}");
         }
     }
@@ -754,7 +773,12 @@ mod tests {
     /// Gravel, Stone and Snow survive the byte (they clamped to 255 and decoded as no kind).
     #[test]
     fn every_kind_and_rut_depth_round_trips_the_eight_bit_kind_lane() {
-        for kind in [PathKind::Earth, PathKind::Gravel, PathKind::Stone, PathKind::Snow] {
+        for kind in [
+            PathKind::Earth,
+            PathKind::Gravel,
+            PathKind::Stone,
+            PathKind::Snow,
+        ] {
             for depth in [0.0f32, 0.03, 0.25, 0.49] {
                 let route = Path::new(
                     vec![Vec3::new(-20.0, 0.0, 0.0), Vec3::new(20.0, 0.0, 0.0)],
@@ -795,7 +819,8 @@ mod tests {
             PathKind::Earth,
         )
         .with_ruts(0.06);
-        let at = |z: f32| nearest(std::slice::from_ref(&track), Vec2::new(0.0, z)).expect("a route");
+        let at =
+            |z: f32| nearest(std::slice::from_ref(&track), Vec2::new(0.0, z)).expect("a route");
         assert!((at(-0.6).surface.rut - 1.0).abs() < 0.05);
         assert_eq!(at(0.0).surface.rut, 0.0, "the crown is no wheel line");
         assert_eq!(at(-0.6).surface.rut_depth_m, 0.06);
@@ -822,8 +847,20 @@ mod tests {
             PathKind::Earth,
         );
         let both = [road, lane];
-        assert_eq!(nearest(&both, Vec2::new(0.0, 12.0)).expect("a route").surface.kind, PathKind::Earth);
-        assert_eq!(nearest(&both, Vec2::new(12.0, 0.0)).expect("a route").surface.kind, PathKind::Gravel);
+        assert_eq!(
+            nearest(&both, Vec2::new(0.0, 12.0))
+                .expect("a route")
+                .surface
+                .kind,
+            PathKind::Earth
+        );
+        assert_eq!(
+            nearest(&both, Vec2::new(12.0, 0.0))
+                .expect("a route")
+                .surface
+                .kind,
+            PathKind::Gravel
+        );
         assert!(nearest(&[], Vec2::ZERO).is_none());
     }
 
@@ -885,12 +922,24 @@ mod tests {
             PathKind::Gravel,
         );
         // A 0.7 m footpath wants 0.175 m texels: 2048 / 0.175 = 11 703, capped at 4096.
-        assert_eq!(mask_resolution(std::slice::from_ref(&lane), 2048.0, 0), 4096);
+        assert_eq!(
+            mask_resolution(std::slice::from_ref(&lane), 2048.0, 0),
+            4096
+        );
         // A road alone asks for no finer than a metre a texel.
-        assert_eq!(mask_resolution(std::slice::from_ref(&road), 2048.0, 0), 2048);
+        assert_eq!(
+            mask_resolution(std::slice::from_ref(&road), 2048.0, 0),
+            2048
+        );
         // A game's own resolution wins, clamped to a power of two in range.
-        assert_eq!(mask_resolution(std::slice::from_ref(&road), 2048.0, 500), 512);
-        assert_eq!(mask_resolution(std::slice::from_ref(&road), 2048.0, 1 << 20), 4096);
+        assert_eq!(
+            mask_resolution(std::slice::from_ref(&road), 2048.0, 500),
+            512
+        );
+        assert_eq!(
+            mask_resolution(std::slice::from_ref(&road), 2048.0, 1 << 20),
+            4096
+        );
     }
 
     #[test]

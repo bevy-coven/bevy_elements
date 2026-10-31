@@ -618,7 +618,10 @@ mod tests {
         // `fog::CLEAR_AIR_EXTINCTION` treats the `Clear` preset's visibility as clear air
         // (and `precipitation_split`'s floor follows); if either moves, the sky's fog moves
         // with it, so pin them together.
-        assert_eq!(target(WeatherPreset::Clear).visibility, crate::fog::CLEAR_VISIBILITY_M);
+        assert_eq!(
+            target(WeatherPreset::Clear).visibility,
+            crate::fog::CLEAR_VISIBILITY_M
+        );
     }
 
     #[test]
@@ -797,7 +800,12 @@ mod tests {
             }
             seen
         };
-        let start = |app: &App| app.world().resource::<WorldClock>().hours_since_2000().floor() as i64;
+        let start = |app: &App| {
+            app.world()
+                .resource::<WorldClock>()
+                .hours_since_2000()
+                .floor() as i64
+        };
 
         // A director that has not stepped: the chain starts Clear at the clock's hour.
         let mut fresh = app(false);
@@ -806,7 +814,10 @@ mod tests {
         let seen = run(&mut fresh, 72);
         let came: Vec<_> = (1..=72).map(|h| seen[&(from + h)]).collect();
         assert_eq!(first, came);
-        assert!(came.windows(2).any(|w| w[0] != w[1]), "72 h without a change");
+        assert!(
+            came.windows(2).any(|w| w[0] != w[1]),
+            "72 h without a change"
+        );
 
         // Mid-chain, with Thunderstorm forced underneath: the same chain.
         let mut forced = app(true);

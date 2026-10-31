@@ -407,7 +407,10 @@ fn mips_keep_the_expected_share_of_the_slope() {
     // band share is the bound the measurement must sit under.
     let weights = |n: u32| (0..n).map(|o| 0.25f32.powi(o as i32)).sum::<f32>();
     let share = (weights(1) / weights(3)).sqrt();
-    assert!(ratio < share, "the mip keeps more than its band: {ratio} against {share}");
+    assert!(
+        ratio < share,
+        "the mip keeps more than its band: {ratio} against {share}"
+    );
     assert!(ratio > 0.5, "the mip lost its band: {ratio}");
     let flat = map_slope(IVec2::ZERO, 9, k);
     assert!(flat.length() < 0.01, "mip 9 slope {flat}");

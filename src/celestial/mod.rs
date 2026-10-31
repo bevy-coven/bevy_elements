@@ -841,8 +841,9 @@ fn auto_exposure(
     // Illuminance-based, with the sky toward the sun as the highlight that caps it (Patry 2021;
     // `docs/research/twilight.md`).
     let cloud = cloud_light(sky.weather.cloud_cover, sky.shadows.as_deref());
-    let target = ev100_for(scene_illuminance(&sky.state, sky.frame.moon_lux, cloud))
-        .max(ev100_for_glow(sky.state.altitude_deg, sky.weather.cloud_cover));
+    let target = ev100_for(scene_illuminance(&sky.state, sky.frame.moon_lux, cloud)).max(
+        ev100_for_glow(sky.state.altitude_deg, sky.weather.cloud_cover),
+    );
     let k = 1.0 - (-time.delta_secs() / EXPOSURE_TAU_S).exp();
     for (entity, camera, mut exposure) in &mut cameras {
         let Some(camera) = camera else {
@@ -1201,7 +1202,10 @@ mod tests {
             );
             // The colour is the *scotopic* one, a cool blue-green: Jensen et al. 2001 §7 on
             // the blue shift, and the rod's curve, whose peak is at 507 nm.
-            assert!(colour.z > colour.y && colour.y > colour.x, "the night is blue: {colour}");
+            assert!(
+                colour.z > colour.y && colour.y > colour.x,
+                "the night is blue: {colour}"
+            );
         }
         // The cloud does not dim it: the night sky is behind the atmosphere.
         let (colour, clear) = cloud_ambient(&dark, 0.0, CloudLight::from_beam(0.0));
@@ -1258,7 +1262,10 @@ mod tests {
         // The transmittance must be warm — the blue is scattered out of the line of sight
         // most — or the division would be unnecessary.
         let warm = ZENITH_TRANSMITTANCE.x - ZENITH_TRANSMITTANCE.z;
-        assert!(warm > 0.0, "the transmittance is not warm: {ZENITH_TRANSMITTANCE:?}");
+        assert!(
+            warm > 0.0,
+            "the transmittance is not warm: {ZENITH_TRANSMITTANCE:?}"
+        );
     }
 
     #[test]

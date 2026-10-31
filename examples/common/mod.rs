@@ -761,12 +761,12 @@ fn capture_frames(
     *index += 1;
     let pending = config.pending.clone();
     pending.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    commands
-        .spawn(Screenshot::primary_window())
-        .observe(move |captured: On<ScreenshotCaptured>| {
+    commands.spawn(Screenshot::primary_window()).observe(
+        move |captured: On<ScreenshotCaptured>| {
             save_to_disk(path.clone())(captured);
             pending.fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
-        });
+        },
+    );
 }
 
 fn run_limit(

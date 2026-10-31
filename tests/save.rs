@@ -12,7 +12,9 @@ use bevy_elements::*;
 fn app() -> App {
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, ClimatePlugin))
-        .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(100)))
+        .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(
+            100,
+        )))
         .insert_resource(Climate::temperate().with_seed(42))
         .insert_resource(
             WorldClock::new(CivilDate::new(2026, 3, 1))
@@ -108,7 +110,10 @@ fn a_restored_director_continues_the_same_weather() {
     load(&mut restored, &file);
     let (same, moving) = compare(&mut original, &mut restored, 720);
     assert_eq!(same, 720, "restored weather diverged");
-    assert!(moving > 0, "the 72 h after the save never changed the weather");
+    assert!(
+        moving > 0,
+        "the 72 h after the save never changed the weather"
+    );
 
     // Without the director the chain restarts at Clear and drifts away.
     let mut original = app();
@@ -116,7 +121,10 @@ fn a_restored_director_continues_the_same_weather() {
     let mut clock_only = app();
     clock_only.insert_resource(original.world().resource::<WorldClock>().clone());
     let (same, _) = compare(&mut original, &mut clock_only, 720);
-    assert!(same < 720, "a fresh director matched the saved run by chance");
+    assert!(
+        same < 720,
+        "a fresh director matched the saved run by chance"
+    );
 }
 
 /// The record of recent days is part of a save: restored onto the saved clock it continues the

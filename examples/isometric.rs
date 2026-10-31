@@ -363,13 +363,7 @@ impl Builder<'_> {
     }
 
     /// A box of `size` standing on the ground at `at`, or floating at `y` if that is given.
-    fn cuboid_at(
-        &mut self,
-        size: Vec3,
-        at: Vec2,
-        y: f32,
-        material: Handle<WeatheredMaterial>,
-    ) {
+    fn cuboid_at(&mut self, size: Vec3, at: Vec2, y: f32, material: Handle<WeatheredMaterial>) {
         self.commands.spawn((
             Mesh3d(self.meshes.add(Cuboid::new(size.x, size.y, size.z))),
             MeshMaterial3d(material),
@@ -438,20 +432,21 @@ fn setup(
     // cone, so it is a `SpotLight`: it hangs in front of the walker's chest and points down
     // and forward, at the ground ahead of them.
     let torch_at = Vec3::new(0.0, TORCH_HEIGHT_M, TORCH_FORWARD_M);
-    commands.spawn((
-        Torch,
-        SpotLight {
-            intensity: 0.0,
-            range: TORCH_RANGE_M,
-            inner_angle: TORCH_INNER_ANGLE,
-            outer_angle: TORCH_OUTER_ANGLE,
-            shadow_maps_enabled: true,
-            ..default()
-        },
-        Transform::from_translation(torch_at)
-            .looking_at(torch_at + Vec3::new(0.0, -1.4, 1.2), Vec3::Y),
-    ))
-    .set_parent_in_place(walker);
+    commands
+        .spawn((
+            Torch,
+            SpotLight {
+                intensity: 0.0,
+                range: TORCH_RANGE_M,
+                inner_angle: TORCH_INNER_ANGLE,
+                outer_angle: TORCH_OUTER_ANGLE,
+                shadow_maps_enabled: true,
+                ..default()
+            },
+            Transform::from_translation(torch_at)
+                .looking_at(torch_at + Vec3::new(0.0, -1.4, 1.2), Vec3::Y),
+        ))
+        .set_parent_in_place(walker);
     // A street lamp over the square: the game's own light, a point source, its power balanced
     // the same way (`docs/research/game-lights.md`). It stands at the square's edge, clear of
     // the walker's loop, so its pool falls across the paving and not on the walker's head.
@@ -574,11 +569,7 @@ fn setup(
     // above the light, which is how a lamp is built: a source at the head's own height would
     // light the head from 0.15 m away and blow it out.
     let post = b.material(Color::srgb(0.22, 0.22, 0.24), 0.5, 0.6);
-    b.cuboid(
-        Vec3::new(0.16, LAMP_HEIGHT_M + 0.5, 0.16),
-        LAMP_AT,
-        post,
-    );
+    b.cuboid(Vec3::new(0.16, LAMP_HEIGHT_M + 0.5, 0.16), LAMP_AT, post);
     let head = b.emissive(Color::srgb(1.0, 0.97, 0.88), 1.0);
     b.commands.spawn((
         Glow,

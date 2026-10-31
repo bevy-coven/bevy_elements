@@ -548,7 +548,9 @@ fn the_weather_air_makes_the_sky_the_fog_colour() {
     finish(&mut app);
 
     let fog = [haze.x, haze.y, haze.z];
-    let difference = (0..3).map(|c| (fogged[c] - fog[c]).abs()).fold(0.0, f32::max);
+    let difference = (0..3)
+        .map(|c| (fogged[c] - fog[c]).abs())
+        .fold(0.0, f32::max);
     let luminance = luminance([fog[0], fog[1], fog[2], 0.0]);
     println!(
         "air {air:.5} m⁻¹: fogged {fogged:?} vs fog {fog:?} (max Δ {difference:.4} of {luminance:.3}); \
@@ -939,7 +941,9 @@ fn the_horizon_sky_is_the_fog_colour_under_a_deck() {
     let below = band(34..45);
     println!("haze {fog:?}; sky just above the horizon {above:?}; just below {below:?}");
     for (name, band) in [("above", above), ("below", below)] {
-        let d = (0..3).map(|c| (band[c] - fog[c]).abs()).fold(0.0f32, f32::max);
+        let d = (0..3)
+            .map(|c| (band[c] - fog[c]).abs())
+            .fold(0.0f32, f32::max);
         assert!(
             d <= 0.05 * luminance,
             "the {name}-horizon sky is not the fog colour: {band:?} vs {fog:?} (Δ {d:.4})"

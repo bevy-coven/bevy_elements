@@ -313,10 +313,8 @@ fn settle_weather(
         return;
     }
     for (entity, mut transform, eye, aim) in &mut cameras {
-        let (Some(here), Some(there)) = (
-            surface.at(transform.translation.xz()),
-            surface.at(aim.0),
-        ) else {
+        let (Some(here), Some(there)) = (surface.at(transform.translation.xz()), surface.at(aim.0))
+        else {
             continue;
         };
         transform.translation.y = here + eye.0;

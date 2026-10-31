@@ -30,8 +30,7 @@ mod wind;
 
 // Plugin group, system sets, camera, its focus, quality, world units.
 pub use plugin::{
-    ElementsCamera, ElementsFocus, ElementsPlugins, ElementsQuality, ElementsSystems,
-    ElementsUnits,
+    ElementsCamera, ElementsFocus, ElementsPlugins, ElementsQuality, ElementsSystems, ElementsUnits,
 };
 
 // Readback cadence.
@@ -94,9 +93,9 @@ pub use lightning::{
 pub use terrain::{
     DEFAULT_SCULPT_HARDNESS, GroundExtension, GroundLayerTextures, GroundMaterial, GroundParams,
     ProceduralTerrain, RestoreTerrain, SculptKind, SculptTerrain, Terrain, TerrainExtension,
-    TerrainExtensionKey,
-    TerrainGrid, TerrainLook, TerrainMaterial, TerrainMaterialParams, TerrainPlugin, TerrainRender,
-    TerrainSnapshot, TerrainSource, TerrainState, TerrainTextures, sculpt_weight,
+    TerrainExtensionKey, TerrainGrid, TerrainLook, TerrainMaterial, TerrainMaterialParams,
+    TerrainPlugin, TerrainRender, TerrainSnapshot, TerrainSource, TerrainState, TerrainTextures,
+    sculpt_weight,
 };
 
 // Aeolian transport.
@@ -124,8 +123,8 @@ pub use waves::{WaterContact, WaveSettings, WaveState, WavesPlugin};
 
 // Rocks scattered on the ground: boulders and stones as meshes.
 pub use rocks::{
-    RockSettings, RockStats, RocksPlugin, STONE_SHAPES, ScatteredRock, StoneDetail, stone_facet_tones,
-    stone_mesh, stone_palette,
+    RockSettings, RockStats, RocksPlugin, STONE_SHAPES, ScatteredRock, StoneDetail,
+    stone_facet_tones, stone_mesh, stone_palette,
 };
 
 // `bevy_flora` integration.

@@ -31,7 +31,6 @@ use crate::plugin::{
 };
 use crate::query::EnvironmentSnapshot;
 use bevy::asset::{RenderAssetUsages, embedded_asset};
-use bevy::shader::load_shader_library;
 use bevy::camera::primitives::Aabb;
 use bevy::camera::visibility::NoAutoAabb;
 use bevy::math::UVec4;
@@ -40,6 +39,7 @@ use bevy::pbr::MaterialPlugin;
 use bevy::prelude::*;
 use bevy::render::render_resource::{Extent3d, ShaderType, TextureDimension, TextureFormat};
 use bevy::render::storage::ShaderBuffer;
+use bevy::shader::load_shader_library;
 use bevy::transform::TransformSystems;
 pub(crate) use gpu::TerrainDispatch;
 use lod::{BoundsTree, LodConfig, Patch, select_patches};
@@ -50,12 +50,14 @@ pub use material::{
 pub(crate) use material::{
     NO_TERRAIN, insert_placeholder, lod_centre_uniform, lod_uniform, shadow_inputs,
 };
-pub use sculpt::{DEFAULT_SCULPT_HARDNESS, RestoreTerrain, SculptKind, SculptTerrain, sculpt_weight};
 use model::{
     F_HALF, GAIN, LACUNARITY, LEAF_CELLS, OCTAVE_ROTATION, R_LOW, R_SPAN, octave_count,
     resolve_resolution, seed_mix,
 };
 pub use model::{TerrainGrid, TerrainSnapshot};
+pub use sculpt::{
+    DEFAULT_SCULPT_HARDNESS, RestoreTerrain, SculptKind, SculptTerrain, sculpt_weight,
+};
 pub use textures::{GroundLayerTextures, TerrainTextures};
 
 /// Largest readback edge: a larger simulation grid is box-averaged down by 2 first.

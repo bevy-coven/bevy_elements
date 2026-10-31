@@ -447,7 +447,10 @@ fn rock_geometry_with(shape: usize, subdivisions: u32, tones: Option<&[Vec3]>) -
     // change.
     let tones = match tones {
         Some(tones) => tones.to_vec(),
-        None => facet_tones(&facet_areas(&facets, sphere_facet + 1, &points, &faces), seed),
+        None => facet_tones(
+            &facet_areas(&facets, sphere_facet + 1, &points, &faces),
+            seed,
+        ),
     };
     let colours = points
         .iter()
@@ -655,7 +658,6 @@ mod tests {
         }
     }
 
-
     #[test]
     fn a_rocks_two_meshes_wear_the_same_rock() {
         // The near and the far mesh of a stone switch at 22 · D. The palette table is the
@@ -666,11 +668,20 @@ mod tests {
         for shape in 0..SHAPES {
             let near = rock_geometry(shape, NEAR_SUBDIVISIONS);
             let far = rock_geometry(shape, FAR_SUBDIVISIONS);
-            assert_eq!(near.tones.len(), far.tones.len(), "shape {shape}: facet count");
+            assert_eq!(
+                near.tones.len(),
+                far.tones.len(),
+                "shape {shape}: facet count"
+            );
             for (facet, (n, f)) in near.tones.iter().zip(&far.tones).enumerate() {
-                assert_eq!(n, f, "shape {shape}: facet {facet} wears {f} in the far mesh, {n} near");
+                assert_eq!(
+                    n, f,
+                    "shape {shape}: facet {facet} wears {f} in the far mesh, {n} near"
+                );
             }
-            assert!((near.info.b - far.info.b).abs() < 1e-6 && (near.info.c - far.info.c).abs() < 1e-6);
+            assert!(
+                (near.info.b - far.info.b).abs() < 1e-6 && (near.info.c - far.info.c).abs() < 1e-6
+            );
         }
     }
 
