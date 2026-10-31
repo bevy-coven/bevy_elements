@@ -1,6 +1,6 @@
 # Saving and restoring a sculpted heightfield
 
-bevy_emerge's issue #99 ("Sculpt terrain, and pieces sit on it") has an editor that raises, lowers, smooths, flattens and roughens a live terrain with `SculptTerrain`. The edits live only on the GPU: a project that is saved and reopened, or an undo of a Smooth, Flatten or Noise stroke (which have no `inverse`, they depend on the ground they met), needs the heights back on the CPU and a way to put them back. The crate already reads the surface back every time it changes (`TerrainSnapshot`, behind `Environment::terrain_height`); it has no public door to it and no way to turn it into a terrain.
+bevy_grimoire's issue #99 ("Sculpt terrain, and pieces sit on it") has an editor that raises, lowers, smooths, flattens and roughens a live terrain with `SculptTerrain`. The edits live only on the GPU: a project that is saved and reopened, or an undo of a Smooth, Flatten or Noise stroke (which have no `inverse`, they depend on the ground they met), needs the heights back on the CPU and a way to put them back. The crate already reads the surface back every time it changes (`TerrainSnapshot`, behind `Environment::terrain_height`); it has no public door to it and no way to turn it into a terrain.
 
 ## Sources
 

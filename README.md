@@ -4,7 +4,7 @@
 
 **Living environments for Bevy 0.20.** A sun and moon placed by real ephemerides, the bright-star sky, a seeded climate that schedules hourly weather, a GPU wind field, volumetric clouds that shade the ground, rain and snow, lightning and thunder, distance and ground fog, and exposure that keeps night looking like night. Simulation runs in compute shaders; gameplay asks the `Environment` system parameter and is answered from a throttled async readback.
 
-![The ten weather presets forced in turn, the clock running from 10.00 h on 20 April 2026: the HUD names the preset and prints the temperature, cover, precipitation rate, wind, visibility, and the sun's and moon's elevation](https://raw.githubusercontent.com/Ladvien/bevy_elements/main/docs/tour.gif)
+![The ten weather presets forced in turn, the clock running from 10.00 h on 20 April 2026: the HUD names the preset and prints the temperature, cover, precipitation rate, wind, visibility, and the sun's and moon's elevation](https://raw.githubusercontent.com/bevy-coven/bevy_elements/main/docs/tour.gif)
 
 *The `weather_tour` example forcing `WeatherPreset::ALL` in turn, one preset for 20 s, with the clock unpaused and running at 1× from 10.00 h: 262 frames, 512 × 288, 34 s of playback over 210 s of game time, the hour finishing at 10.06. The stills for each system are in the sections below, and `weather_tour` is listed under [Examples](#examples).*
 
@@ -110,7 +110,7 @@ Orthographic cameras (`Projection::Orthographic`) work: the clouds are marched a
 
 ![An isometric town 1500 m from its camera, which follows the walker: rain, snow, fog and a partly cloudy afternoon](docs/isometric.png)
 
-![The isometric town through Rain, Thunderstorm, Snow and a partly cloudy afternoon, the camera following the walker](https://raw.githubusercontent.com/Ladvien/bevy_elements/main/docs/isometric.gif)
+![The isometric town through Rain, Thunderstorm, Snow and a partly cloudy afternoon, the camera following the walker](https://raw.githubusercontent.com/bevy-coven/bevy_elements/main/docs/isometric.gif)
 
 ![The hills through an isometric orthographic camera 457 m back, 18 m of ground on screen, with posts standing on Environment::terrain_height every 2 m on 10 cm red feet. Left, before: the ground near the focus drawn in coarse, morphed patches, and most posts end in the grass, their feet swallowed (a quarter of them wholly). Right, after: the patches about the focus at full detail on the height samples, and every post stands on its red foot](docs/orthographic_lod.png)
 
@@ -186,7 +186,7 @@ Every reflection and the sky light of every PBR surface come from the camera's e
 
 ![The pond at 16:30 under a partly cloudy sky: the cumulus and the blue gaps between them reflected in the water, which is a mirror with a fine skin on it](docs/sky_light.png)
 
-![The partly cloudy pond: the cumulus and the blue gaps between them in the moving water](https://raw.githubusercontent.com/Ladvien/bevy_elements/main/docs/sky_light.gif)
+![The partly cloudy pond: the cumulus and the blue gaps between them in the moving water](https://raw.githubusercontent.com/bevy-coven/bevy_elements/main/docs/sky_light.gif)
 
 **Rainbows.** A shower opposite a low sun draws a rainbow in the sky composite (`RainbowSettings::strength`, default 5, `0` switches it off). The bow is a circle about the antisolar point, so it follows the sun and the camera: it needs the sun below 42° (at 20° the arc tops out at 22° of elevation, at sunset it is nearly a half circle) and a shower in the weather map in that direction, seen under the cloud base, with the sun reaching it (the cloud shadow map's mean beam, so full overcast draws none and a break between showers draws the whole bow). Its colours come from Airy's theory for the weather's Marshall–Palmer drops: red outside the primary and violet inside, a fainter secondary with the order reversed and Alexander's dark band between, a pale wide bow in a drizzle and a narrow vivid one after a heavy shower. The sun's own colour (through the atmosphere) tints it, so a sunset bow is red-gold. It is drawn on sky pixels only, so terrain and water in front of it hide it (the still sea's reflection of it is not drawn). `docs/research/rainbow.md`.
 
@@ -220,7 +220,7 @@ fn strategy_view(mut commands: Commands) {
 
 ![The isometric town in Rain and Snow at 35°: left, the physical look (wind-slanted dashes, identical dots); right, PrecipitationLook::readable() (upright streaks, flakes of many sizes)](docs/precipitation_look.png)
 
-![The isometric town under forced Rain, animated: wind-slanted drops over the meadow, the HUD reading Rain (forced) at 4.8 mm/h](https://raw.githubusercontent.com/Ladvien/bevy_elements/main/docs/precipitation_look.gif)
+![The isometric town under forced Rain, animated: wind-slanted drops over the meadow, the HUD reading Rain (forced) at 4.8 mm/h](https://raw.githubusercontent.com/bevy-coven/bevy_elements/main/docs/precipitation_look.gif)
 
 ### Lightning
 
@@ -508,7 +508,7 @@ fn tracker(env: Environment) {
 
 ![A walker's loop pressed into a game's own snowed ground, seen from the isometric camera at 17.3 h; a game's own hilly mesh with prints and ruts, no crate terrain](docs/trails_game_ground.png)
 
-![The isometric walker pressing prints into the town's own snowed ground at evening, six seconds](https://raw.githubusercontent.com/Ladvien/bevy_elements/main/docs/trails_game_ground.gif)
+![The isometric walker pressing prints into the town's own snowed ground at evening, six seconds](https://raw.githubusercontent.com/bevy-coven/bevy_elements/main/docs/trails_game_ground.gif)
 
 ```rust
 # use bevy::prelude::*;
@@ -520,7 +520,7 @@ fn a_boot(mut commands: Commands) {
 }
 ```
 
-![A walker and a four-wheeled vehicle pressing prints and ruts into fresh powder, six seconds in real time](https://raw.githubusercontent.com/Ladvien/bevy_elements/main/docs/trails.gif)
+![A walker and a four-wheeled vehicle pressing prints and ruts into fresh powder, six seconds in real time](https://raw.githubusercontent.com/bevy-coven/bevy_elements/main/docs/trails.gif)
 
 ![Boot prints and a car's ruts in fresh powder](docs/trails_snow.png)
 
@@ -576,7 +576,7 @@ fn a_float(mut commands: Commands) {
 }
 ```
 
-![A hull's wake: Kelvin's V, transverse crests and breaking foam](https://raw.githubusercontent.com/Ladvien/bevy_elements/main/docs/waves.gif)
+![A hull's wake: Kelvin's V, transverse crests and breaking foam](https://raw.githubusercontent.com/bevy-coven/bevy_elements/main/docs/waves.gif)
 
 ![A hull crossing a pond, its wake and foam](docs/waves_wake.png) ![A pebble's rings](docs/waves_rings.png)
 

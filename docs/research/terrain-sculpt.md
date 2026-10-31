@@ -1,13 +1,13 @@
 # SculptTerrain: height brushes on the live terrain, for an editor and for a game
 
-bevy_emerge's issue #99 ("Sculpt terrain, and pieces sit on it") asks for raise, lower, smooth, flatten-to-height and noise brushes with a radius and a strength, a stroke that changes the heights under it and nowhere else, and placed pieces that follow the ground when it is raised ("any missing query is filed on `bevy_elements`"). The crate has no way to change a live terrain's heights except a bake or a test writing the layer buffer. A game needs the same for craters, trenches, digging and landscaping. This note adds a message, `SculptTerrain`, that edits bedrock on the GPU, the one place the height lives, and lets the existing readback carry the answer to `Environment::ground_height`.
+bevy_grimoire's issue #99 ("Sculpt terrain, and pieces sit on it") asks for raise, lower, smooth, flatten-to-height and noise brushes with a radius and a strength, a stroke that changes the heights under it and nowhere else, and placed pieces that follow the ground when it is raised ("any missing query is filed on `bevy_elements`"). The crate has no way to change a live terrain's heights except a bake or a test writing the layer buffer. A game needs the same for craters, trenches, digging and landscaping. This note adds a message, `SculptTerrain`, that edits bedrock on the GPU, the one place the height lives, and lets the existing readback carry the answer to `Environment::ground_height`.
 
 ## Sources
 
 - Corpus search for method phrases (`terrain brush`, `sculpting brush`, `height brush`, `terrain authoring`) found nothing: the library holds simulation and rendering work, not editor tooling. Recorded, not searched further.
 - Brush falloff, the common practice in terrain editors (Unity Terrain, Unreal Landscape, World Machine): a radial weight 1 inside a hardness fraction of the radius and a smooth fall to 0 at the radius. Adopted as a smoothstep, whose zero slope at both ends leaves no seam at the brush's rim. Not a corpus source; the choice is the conventional one and is recorded under Deviations.
 - `docs/research/terrain.md` (layers, pack, readback), `docs/research/erosion.md` (bedrock vs sediment layering: a hand edit moves bedrock, sediment then relaxes by the thermal pass), `AGENTS.md` ("send requests as plain fields of the extracted resource, atomics only to report back").
-- bevy_emerge #99 acceptance, read 2026-10-29: a raise stroke changes the heights under it and nowhere else.
+- bevy_grimoire #99 acceptance, read 2026-10-29: a raise stroke changes the heights under it and nowhere else.
 
 ## What great looks like
 

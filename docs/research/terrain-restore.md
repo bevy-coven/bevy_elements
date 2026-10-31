@@ -1,6 +1,6 @@
 # Restoring a region of the terrain from a snapshot
 
-bevy_emerge's editor (issue #99 there) undoes a raise or a lower with `SculptTerrain::inverse`. Smooth, Flatten and Noise have no inverse (they depend on the ground they met), and `TerrainSnapshot` can only respawn the whole terrain, which drops the water, the cover maps and the trails. An editor needs to put the ground of one stroke's footprint back as it was, in place.
+bevy_grimoire's editor (issue #99 there) undoes a raise or a lower with `SculptTerrain::inverse`. Smooth, Flatten and Noise have no inverse (they depend on the ground they met), and `TerrainSnapshot` can only respawn the whole terrain, which drops the water, the cover maps and the trails. An editor needs to put the ground of one stroke's footprint back as it was, in place.
 
 ## Sources
 

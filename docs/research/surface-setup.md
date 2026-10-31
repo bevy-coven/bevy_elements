@@ -1,6 +1,6 @@
 # SurfaceSetup and TerrainSetup: the ground, water and cover settings as saved, validated, live-appliable values
 
-bevy_emerge's terrain and water panels (issues #99 and #100 there) store this crate's own settings
+bevy_grimoire's terrain and water panels (issues #99 and #100 there) store this crate's own settings
 types in a game's project and edit them live. `EnvironmentSetup` did that for the sky; the ground has
 nine settings resources (hydrology, erosion, snow, wetness, water, waves, rocks, dust, trails), three
 without serde (`WaterSettings`, `TrailSettings`, `WaveSettings`), no validation, and a `Terrain`

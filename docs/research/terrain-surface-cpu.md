@@ -1,6 +1,6 @@
 # Generating a procedural terrain's surface on the CPU
 
-bevy_emerge's issue #99 (and this crate's #48) wants to start a saved heightfield from a preset (`ProceduralTerrain::hills(seed)`), headless, with no GPU and no `TerrainPlugin`, and keep the heights in its own file. The generator exists on the CPU only as a test mirror (`terrain::model::mirror::generate_surface`, `#[cfg(test)]`); the public path runs `generate.wesl` on the GPU.
+bevy_grimoire's issue #99 (and this crate's #48) wants to start a saved heightfield from a preset (`ProceduralTerrain::hills(seed)`), headless, with no GPU and no `TerrainPlugin`, and keep the heights in its own file. The generator exists on the CPU only as a test mirror (`terrain::model::mirror::generate_surface`, `#[cfg(test)]`); the public path runs `generate.wesl` on the GPU.
 
 ## Sources
 

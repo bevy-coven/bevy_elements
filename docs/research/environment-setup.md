@@ -1,6 +1,6 @@
 # EnvironmentSetup: the sky-and-weather settings as one saved, validated, live-appliable value
 
-An editor (bevy_emerge's Environment panel, issue #98 there) lets an author choose a climate, a
+An editor (bevy_grimoire's Environment panel, issue #98 there) lets an author choose a climate, a
 place, a date and clock, and a forced weather, saves it with the map, and previews it live with this
 crate's own plugins. Today it defines a wrapper type of its own because the crate offers no single
 value for those four resources plus the director's forced preset, whose field is private, and
@@ -17,7 +17,7 @@ console and a test harness need the same.
 - Corpus search for method phrases (`preset`, `save state`) returns nothing applicable: this is API
   plumbing, not a simulation model. Ranges for location come from the geographic coordinate
   definition (latitude -90..90, longitude -180..180) and the UTC offset range in use, -12..+14 h.
-- The editor's own use, read from `Ladvien/bevy_emerge` `crates/bevy_emerge_mapper/src/environment.rs`
+- The editor's own use, read from `bevy-coven/bevy_grimoire` `crates/bevy_grimoire_mapper/src/environment.rs`
   (shallow clone, 2026-10-29): `ElementsSettings { clock, location, climate, forced_weather }`,
   `apply` with an `applied_force` local, errors shown on a status line.
 
