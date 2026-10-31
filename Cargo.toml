@@ -1,6 +1,6 @@
 [package]
 name = "bevy_elements"
-version = "0.7.7"
+version = "0.7.8"
 edition = "2024"
 rust-version = "1.97.1"
 description = "Living environments for Bevy: sun, moon and stars, climate-driven weather, GPU wind, volumetric clouds, rain, snow and fog, lightning, terrain with hydraulic and thermal erosion, flooding, snow cover, wetness and dust — simulated in compute shaders."
@@ -12,7 +12,7 @@ readme = "README.md"
 # `bevy` first: it is the term a Bevy user searches, and crates.io weights keyword position.
 keywords = ["bevy", "weather", "terrain", "erosion", "atmosphere"]
 categories = ["game-development", "graphics", "rendering"]
-exclude = ["assets/*", "docs/*.gif", "docs/*.png", "docs/research/*", "tools/*"]
+exclude = ["assets/*", "docs/*.gif", "docs/*.png", "docs/media/*", "docs/research/*", "tools/*"]
 
 # docs.rs builds with every feature so the optional integrations are visible to someone choosing
 # the crate, not only to someone who has already checked out the source.

@@ -1,6 +1,12 @@
 ## [Unreleased]
 
-## [0.7.7] - 2026-10-31
+## [0.7.8] - 2026-10-31
+
+### Fixed
+
+- **The package leaves out `docs/media/`.** 0.7.7 was tagged but never published: moving the captures into `docs/media/` took them past the package's `exclude` list, and the upload was refused for its size. 0.7.8 is 0.7.7's code with that line fixed.
+
+## [0.7.7] - 2026-10-31 (tagged, not published)
 ### Changed
 
 - **The README is 101 lines and every domain has a guide page (#52).** The 904-line README kept its pitch, its badges, its hero GIF, a 20-line quick start and a 7-bullet "What you can do"; the reference moved, unchanged, into `docs/guide/` (`README.md` index, `scene`, `sky-weather`, `terrain`, `water`, `surfaces`, `queries`, `performance`, `examples`, `research`) and the before-and-after captures into `docs/gallery.md`. Every image and GIF moved from `docs/` to `docs/media/` with a `docs/media/README.md` naming the command, date and version of each, and the absolute `raw.githubusercontent.com` URLs became relative paths. Adds the org's Vibe Coded banner, the badge row, the Status and Why lines, a still image, Part of the Coven, Bevy compatibility, and Who and licence; `AGENTS.md`, `CLAUDE.md` and `.omp/commands/build-loop.md` link the org's `DOCUMENTATION.md`, and CI runs `cargo test --doc` by name.
