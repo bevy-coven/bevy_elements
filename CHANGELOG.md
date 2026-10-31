@@ -1,6 +1,7 @@
 ## [Unreleased]
 ### Changed
 
+- **The README is 99 lines and every domain has a guide page (#52).** The 904-line README kept its pitch, its badges, its hero GIF, a 20-line quick start and a 7-bullet "What you can do"; the reference moved, unchanged, into `docs/guide/` (`README.md` index, `scene`, `sky-weather`, `terrain`, `water`, `surfaces`, `queries`, `performance`, `examples`, `research`) and the before-and-after captures into `docs/gallery.md`. Every image and GIF moved from `docs/` to `docs/media/` with a `docs/media/README.md` naming the command, date and version of each, and the absolute `raw.githubusercontent.com` URLs became relative paths. Adds the org's Vibe Coded banner, the badge row, the Status and Why lines, a still image, Part of the Coven, Bevy compatibility, and Who and licence; `AGENTS.md`, `CLAUDE.md` and `.omp/commands/build-loop.md` link the org's `DOCUMENTATION.md`, and CI runs `cargo test --doc` by name.
 - **The night sea's horizon is closer to the sky above it.** The night fill's lift now rises from 20° to 60° over the horizon (was 8° to 40°) and keeps 5 % of itself at the horizon (was 15 %), so a sea at a grazing view reflects a lobe that no longer reaches the lifted sky: the sea at midnight is 2.3x the sky just over the horizon (was 4.1x). A horizontal surface's night irradiance is unchanged (3.26e-3 against 3.29e-3); a vertical one gets about 0.50 of the uniform lift (was 0.69). `docs/research/night-sky-light.md` Deviation 6.
 ### Added
 

@@ -44,6 +44,11 @@ jobs:
       - name: Test
         run: cargo test
 
+      # `cargo test` includes the doctests, which is where the README compiles (the crate's
+      # `#![doc = include_str!("../README.md")]`). Named so a run's log says so by itself.
+      - name: Test the README's doctests
+        run: cargo test --doc
+
       - name: Test the isomesh feature
         run: cargo test --features=isomesh --lib
 

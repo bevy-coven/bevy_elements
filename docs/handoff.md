@@ -21,7 +21,7 @@ green. **Nothing is half-done in the working tree**: `git status --short` is emp
    over the terrain (its alpha a per-texel grain), which the terrain material draws: worn bare
    ground with the route's own surface, a dish cross-section, snow cleared where traffic runs,
    wheel ruts, and a route coloured by the ground it crosses. Cost within ±2 % of a scene with no
-   network. README section, `docs/paths.png`, `docs/research/paths.md`.
+   network. README section, `docs/media/paths.png`, `docs/research/paths.md`.
 2. **Iteration 56 — path surface queries** (`1c9a8e2`, plus `079b473`/`e33891d`). `Environment::
    surface_at`, `nearest_path`, `on_path` with the `PathSurface` / `PathHit` types; exact and
    current (CPU over the game's own polylines), sharing the shader's coverage and rut curves so the

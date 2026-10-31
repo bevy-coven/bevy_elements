@@ -2,7 +2,7 @@
 
 Every near cliff in the crate wears a web of flat grey ribbons crossing each other, with a
 fence of straight parallel bands over it (`/tmp/i43/crop_face3.png`, `crop_face30.png`; the
-same web is in iteration 40's showcase `docs/block_sizes.png`). A rock face that a player reads
+same web is in iteration 40's showcase `docs/media/block_sizes.png`). A rock face that a player reads
 as *jointed rock* is the opposite: flat block faces, each at its own angle, separated by thin
 dark traces where the blocks part. This note finds why the crate draws ribbons and replaces the
 joints with what the rock-mechanics description says a joint is.

@@ -1,6 +1,6 @@
 # The water's surface is a mirror with a skin on it, not a bowl of jello
 
-`docs/sky_light.gif` shows the pond under a partly cloudy sky, and the water reads as a smooth
+`docs/media/sky_light.gif` shows the pond under a partly cloudy sky, and the water reads as a smooth
 blue-grey sheet with soft blobs where the cumulus should be reflected. A player sees "jello":
 a surface with the *shape* of a liquid but none of the *behaviour* of one. The same complaint
 covers the second half of the request: the readable rain and snow are not much better than the

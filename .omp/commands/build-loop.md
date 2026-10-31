@@ -260,6 +260,8 @@ Start only after section 7 passes. Then release (the "Release" block at the end 
 
 ### README, demos and docs stay true
 
+README and docs follow https://github.com/bevy-coven/.github/blob/main/DOCUMENTATION.md; a feature is not done until its README line and, if visible, its GIF exist.
+
 A README is read before anything else, so a false line there costs more than a false line anywhere else.
 An audit on 2026-10-27 found one in each of the four loop repos: a `tour.gif` captioned "at noon" over a HUD
 reading 10.00 h with a running clock; a `ties.gif` captioned for rivalry colours that appear in none of its 240

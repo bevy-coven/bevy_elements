@@ -10,6 +10,8 @@ Pinned to **Bevy 0.20.0**. Read the vendored source and migration guides, not be
 
 This repository, [`bevy-coven/bevy_elements`](https://github.com/bevy-coven/bevy_elements), is canonical. MIT OR Apache-2.0. Consumers (Sanctuary at `/Users/ladvien/sanctuary` on the Mac) get fixes here, in their own commits with tests, and never patch a copy.
 
+README and docs follow https://github.com/bevy-coven/.github/blob/main/DOCUMENTATION.md; a feature is not done until its README line and, if visible, its GIF exist.
+
 ## Research first
 
 No system is implemented without its `docs/research/<system>.md`, committed first. Protocol:
