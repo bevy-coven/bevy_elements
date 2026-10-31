@@ -86,3 +86,7 @@ Every budget in the guide is met: each GIF is 3-8 s, at most 960 px wide, 15 fps
 | [`waves.gif`](waves.gif) | 2026-10-18 | 0.5.3 | regeneration command unknown; captured before this list existed |
 | [`waves_rings.png`](waves_rings.png) | 2026-10-18 | 0.5.3 | regeneration command unknown; captured before this list existed |
 | [`waves_wake.png`](waves_wake.png) | 2026-10-18 | 0.5.3 | regeneration command unknown; captured before this list existed |
+
+## Copies at the old paths
+
+Until 2026-10-31 these files lived directly under `docs/` (and some under other `docs/` folders). Every release published before then has a README on crates.io and docs.rs whose image URLs name those old paths, and a published README never changes. So each moved file also stays at its old path, as an identical copy: git stores the same content once, so a copy costs nothing in the repository's size. **Do not delete them as duplicates**; when one of the files here is re-recorded, the old-path copy is updated with it (`docs/media/` is the one new references use). The org's rule is in [DOCUMENTATION.md](https://github.com/bevy-coven/.github/blob/main/DOCUMENTATION.md#image-and-link-urls-in-a-readme).
