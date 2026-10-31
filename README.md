@@ -69,6 +69,8 @@ The example lifts the camera to 6 m above the ground and holds it there while th
 
 ![An isometric town 1500 m from its camera, which follows the walker: rain, snow, fog and a partly cloudy afternoon](docs/media/isometric.png)
 
+![Clear at noon on 20 April over the hills: a flat stratus-free sky, the ground at 16.8 °C, 40 000 m visibility](docs/media/still.png)
+
 *The `isometric` example: an orthographic camera 1 500 m back, following a walker, in the crate's rain, snow and fog.*
 
 ## Part of the Coven

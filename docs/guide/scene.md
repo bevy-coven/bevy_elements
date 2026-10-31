@@ -16,6 +16,8 @@ Each part of that dressing is a flag on `ElementsCamera`, all on by default: `at
 
 ![The isometric town in a game's own look: its warm key light and shadows, a flat palette, and the crate's rain, wetness and snow on top](../media/game_look.png)
 
+![The same town, moving: the crate's rain and snow over a game's own warm key light, flat palette and shadows](../media/game_look.gif)
+
 ## A focus, and isometric cameras
 
 The camera-relative domains (the rain and snow box, the wind window and its gusts, the ground fog, the strikes and the thunder distance, the cloud weather and shadow maps, the trails and waves windows, the surface weathering's mean) centre on the camera. Put `ElementsFocus` on the camera to centre them on something else: `ElementsFocus::Entity(player)` follows that entity's transform, `ElementsFocus::Point(p)` a point you move yourself. A third-person camera puts it on the character; an isometric or top-down game, whose camera stands far back from what it shows, on the player or on the point the camera looks at.
