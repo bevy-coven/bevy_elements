@@ -67,7 +67,7 @@ Every budget in the guide is met: each GIF is 3-8 s, at most 960 px wide, 15 fps
 | [`storm.png`](storm.png) | 2026-10-13 | 0.4 or earlier | regeneration command unknown; captured before this list existed |
 | [`sunset.png`](sunset.png) | 2026-10-17 | 0.5.3 | regeneration command unknown; captured before this list existed |
 | [`tour.gif`](tour.gif) | 2026-10-18 | 0.5.3 | `ELEMENTS_SHOT_DIR=/tmp/tour ELEMENTS_FRAMES=12600 ELEMENTS_SHOT_EVERY=48 ELEMENTS_SHOT_FROM=36 cargo run --release --example weather_tour`, then `magick -delay 13 -loop 0 /tmp/tour/frame*.png -resize 512x -colors 200 -layers Optimize docs/media/tour.gif` |
-| [`tour_hero.gif`](tour_hero.gif) | 2026-10-31 | 0.7.6 | the first 52 frames of `docs/media/tour.gif` at 20 fps: `ffmpeg -i docs/media/tour.gif -vf "select='not(mod(n,2))',scale=512:-1:flags=lanczos,setpts=N/(20*TB),split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer" -loop 0 docs/media/tour_hero.gif` |
+| [`tour_hero.gif`](tour_hero.gif) | 2026-10-31 | 0.7.6 | the tour's first four presets (Clear, PartlyCloudy, Overcast, Fog) cut from `docs/media/tour.gif`: `ffmpeg -i docs/media/tour.gif -vf "select='between(n,8,85)',scale=512:-1:flags=lanczos,setpts=N/(12*TB),split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer" -loop 0 docs/media/tour_hero.gif` |
 | [`trails.gif`](trails.gif) | 2026-10-17 | 0.5.3 | regeneration command unknown; captured before this list existed |
 | [`trails_game_ground.gif`](trails_game_ground.gif) | 2026-10-18 | 0.5.3 | regeneration command unknown; captured before this list existed |
 | [`trails_game_ground.png`](trails_game_ground.png) | 2026-10-18 | 0.5.3 | regeneration command unknown; captured before this list existed |

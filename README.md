@@ -10,9 +10,9 @@ Living environments for Bevy 0.20: a sun and moon on real ephemerides, the brigh
 [![Bevy](https://img.shields.io/badge/bevy-0.20-blue)](https://bevyengine.org)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#who-and-licence)
 
-![The ten weather presets forced in turn, the clock running from 10.00 h on 20 April 2026: the HUD names the preset and prints the temperature, cover, precipitation rate, wind, visibility, and the sun's and moon's elevation](docs/media/tour_hero.gif)
+![The sky over one morning: a clear sky, then a broken cumulus deck, then full stratus cover, then fog, the preset named on screen and the HUD printing the temperature, cover, wind and visibility](docs/media/tour_hero.gif)
 
-*`weather_tour` forcing `WeatherPreset::ALL` in turn with the clock running at 1×: rain, cloud, fog and sun in the same afternoon.*
+*`weather_tour` forcing `WeatherPreset::Clear`, `PartlyCloudy`, `Overcast` and `Fog` in turn at 10.00 h on 20 April 2026 — the first three hours of its tour of all ten presets.*
 
 **Status:** usable · Bevy 0.20 · MSRV 1.97.1
 
@@ -69,7 +69,7 @@ The example lifts the camera to 6 m above the ground and holds it there while th
 
 ![An isometric town 1500 m from its camera, which follows the walker: rain, snow, fog and a partly cloudy afternoon](docs/media/isometric.png)
 
-![Clear at noon on 20 April over the hills: a flat stratus-free sky, the ground at 16.8 °C, 40 000 m visibility](docs/media/still.png)
+![Clear at 10.00 h on 20 April: cover 0.05, 40 000 m visibility, wind 3.0 m/s, the sun 40.1° up](docs/media/still.png)
 
 *The `isometric` example: an orthographic camera 1 500 m back, following a walker, in the crate's rain, snow and fog.*
 
