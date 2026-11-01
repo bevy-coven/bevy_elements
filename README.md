@@ -75,7 +75,7 @@ The example lifts the camera to 6 m above the ground and holds it there while th
 
 ## Part of the Coven
 
-bevy_elements is one crate in [the coven](https://github.com/bevy-coven), a family of Bevy crates that cover the parts of a game only human authoring scales: world, life, interface and spectacle. In [Grimoire](https://bevy-coven.github.io/crates/bevy_elements.html#use-it-in-grimoire) it is an optional cargo feature whose map environment panel edits this crate's own serde settings — the clock, the climate, the forced weather, snow, wetness, rocks and dust.
+bevy_elements is one crate in [the coven](https://github.com/bevy-coven), a family of Bevy crates that cover the parts of a game only human authoring scales: world, life, interface and spectacle. In [the Cauldron](https://bevy-coven.github.io/crates/bevy_elements.html#use-it-in-the-cauldron) it is an optional cargo feature whose map environment panel edits this crate's own serde settings — the clock, the climate, the forced weather, snow, wetness, rocks and dust.
 
 ## Bevy compatibility
 
