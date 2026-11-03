@@ -724,7 +724,15 @@ fn undress_camera(remove: On<Remove<ElementsCamera>>, mut commands: Commands, dr
         e.remove::<AmbientLight>();
     }
     if ours.msaa {
-        e.insert(Msaa::default());
+        // **Silenced**, because `insert` aimed at a camera that despawns before the flush is an
+        // error, and Bevy's default handler turns that into a panic. `get_entity` above only proves
+        // the entity was alive when this command was *queued*; a despawn queued in the same frame
+        // lands first. Measured on bevy_grimoire 2026-11-03: `insert<Msaa>: Entity despawned:
+        // 961v0` closed the window with `EXIT=101`, the last of this observer's commands to need it.
+        e.queue_silenced(bevy::ecs::system::entity_command::insert(
+            Msaa::default(),
+            bevy::ecs::bundle::InsertMode::Replace,
+        ));
     }
     if ours.sky_background {
         e.remove::<SkyBackground>();
