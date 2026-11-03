@@ -733,9 +733,19 @@ fn undress_camera(remove: On<Remove<ElementsCamera>>, mut commands: Commands, dr
 }
 
 /// Dress again a camera whose flags changed: a game can toggle the physical sky at runtime.
-fn redress_cameras(changed: Query<Entity, Changed<ElementsCamera>>, mut dresser: Dresser) {
+/// **A camera on its way out is not dressed again.** `Changed<ElementsCamera>` includes an entity
+/// whose component was just removed, and the removal happens while the entity may already be
+/// despawning; `dress` then queues `insert`/`remove` at a dead entity, which Bevy's default handler
+/// turns into a panic that closes the window (`EXIT=101`, bevy_grimoire 2026-11-03).
+fn redress_cameras(
+    changed: Query<Entity, Changed<ElementsCamera>>,
+    live: Query<(), With<ElementsCamera>>,
+    mut dresser: Dresser,
+) {
     for entity in &changed {
-        dresser.dress(entity);
+        if live.get(entity).is_ok() {
+            dresser.dress(entity);
+        }
     }
 }
 
