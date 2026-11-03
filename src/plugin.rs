@@ -687,13 +687,27 @@ fn dress_camera(add: On<Add<ElementsCamera>>, mut dresser: Dresser) {
 ///
 /// `Hdr` comes in through `#[require(Hdr)]`, so the crate cannot tell whether the game had it already;
 /// it is left in place and the caller removes it if it wants it gone.
+/// **`Remove` fires for a despawned camera too.** Bevy sends `Remove<T>` when the entity is being
+/// despawned as well as when the component is taken off a live one, and `EntityCommands::remove`
+/// on an entity that is gone is an **error**, which Bevy's default handler escalates to a panic —
+/// the editor built with this feature died with `EXIT=101` on
+/// `remove::<(AtmosphereSettings, AtmosphereEnvironmentMapLight)>: Entity despawned`, on
+/// bevy_grimoire 2026-11-03. `get_entity` is the check: if the entity is not alive there is nothing
+/// to undress, and the components went with it.
 fn undress_camera(remove: On<Remove<ElementsCamera>>, mut commands: Commands, dressed: Query<&ElementsDressing>) {
     let entity = remove.entity;
+    // **`Remove` fires for a despawned camera too**, and every line below is a command that runs
+    // later, when the entity may be gone. `get_entity` is the check, and the removals are queued
+    // only when it resolves: Bevy's default handler turns a command aimed at a despawned entity into
+    // a panic, which closed the editor with `EXIT=101` on bevy_grimoire 2026-11-03
+    // (`remove::<(AtmosphereSettings, AtmosphereEnvironmentMapLight)>: Entity despawned`).
     let Ok(ours) = dressed.get(entity) else {
         return;
     };
     let ours = *ours;
-    let mut e = commands.entity(entity);
+    let Ok(mut e) = commands.get_entity(entity) else {
+        return;
+    };
     if ours.atmosphere {
         e.remove::<(AtmosphereSettings, AtmosphereEnvironmentMapLight)>();
     }

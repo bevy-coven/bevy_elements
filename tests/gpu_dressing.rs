@@ -343,3 +343,33 @@ fn removing_the_camera_undoes_the_dressing() {
 /// The game's own camera in [`removing_the_camera_undoes_the_dressing`].
 #[derive(Resource)]
 struct OwnCamera(Entity);
+
+/// **A despawned camera does not panic the undress.** Bevy sends `Remove<ElementsCamera>` while the
+/// entity is being despawned as well as when the component comes off a live camera, and
+/// `EntityCommands::remove` on a gone entity is an error the default handler escalates to a panic.
+///
+/// Measured on bevy_grimoire 2026-11-03: an editor built `--features bevy_elements` exited `101` with
+/// *"Entity despawned: The entity with ID 961v0 is invalid"* on
+/// `remove::<(AtmosphereSettings, AtmosphereEnvironmentMapLight)>`, which killed the window before any
+/// clip could be recorded.
+#[test]
+#[ignore = "needs a GPU"]
+fn despawning_a_dressed_camera_does_not_panic() {
+    let _lock = serial();
+    let mut app = app(CelestialSettings::default(), |world| {
+        let e = world
+            .spawn((Camera3d::default(), ElementsCamera::default()))
+            .id();
+        world.insert_resource(Cam(e));
+    });
+    run(&mut app, 10);
+    let e = app.world().resource::<Cam>().0;
+    assert!(
+        app.world().get::<AtmosphereSettings>(e).is_some(),
+        "precondition: the camera is dressed"
+    );
+
+    // The despawn that killed the editor. A panic here fails the test rather than a window.
+    app.world_mut().entity_mut(e).despawn();
+    run(&mut app, 10);
+}
