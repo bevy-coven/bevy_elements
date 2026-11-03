@@ -474,6 +474,7 @@ impl Plugin for ElementsGpuCorePlugin {
         app.init_resource::<CameraNeeds>()
             .add_plugins(ReadbackPlugin)
             .add_observer(dress_camera)
+            .add_observer(undress_camera)
             .add_systems(Update, redress_cameras.in_set(ElementsSystems::Clock));
     }
 }
@@ -674,6 +675,47 @@ pub(crate) struct SkyBackground;
 
 fn dress_camera(add: On<Add<ElementsCamera>>, mut dresser: Dresser) {
     dresser.dress(add.entity);
+}
+
+/// **Undress a camera whose [`ElementsCamera`] was removed** (this crate's #55, bevy_grimoire#193).
+///
+/// `ElementsDressing` records which components the crate itself inserted, so the undo is the same
+/// `toggle` in reverse and a component the *game* put there is never taken away. Without this the
+/// camera kept the atmosphere, both fogs, the depth prepass, `Msaa::Off` and a celestial-driven
+/// `AmbientLight` for the rest of the session: a host that removes the marker to go back to its own
+/// look saw nothing change, and only a restart brought it back.
+///
+/// `Hdr` comes in through `#[require(Hdr)]`, so the crate cannot tell whether the game had it already;
+/// it is left in place and the caller removes it if it wants it gone.
+fn undress_camera(remove: On<Remove<ElementsCamera>>, mut commands: Commands, dressed: Query<&ElementsDressing>) {
+    let entity = remove.entity;
+    let Ok(ours) = dressed.get(entity) else {
+        return;
+    };
+    let ours = *ours;
+    let mut e = commands.entity(entity);
+    if ours.atmosphere {
+        e.remove::<(AtmosphereSettings, AtmosphereEnvironmentMapLight)>();
+    }
+    if ours.depth_prepass {
+        e.remove::<DepthPrepass>();
+    }
+    if ours.volumetric_fog {
+        e.remove::<VolumetricFog>();
+    }
+    if ours.distance_fog {
+        e.remove::<DistanceFog>();
+    }
+    if ours.ambient {
+        e.remove::<AmbientLight>();
+    }
+    if ours.msaa {
+        e.insert(Msaa::default());
+    }
+    if ours.sky_background {
+        e.remove::<SkyBackground>();
+    }
+    e.remove::<ElementsDressing>();
 }
 
 /// Dress again a camera whose flags changed: a game can toggle the physical sky at runtime.

@@ -276,3 +276,70 @@ fn flags_flip_at_runtime() {
     assert_eq!(count::<Atmosphere>(&mut app), 1);
     finish(app);
 }
+
+/// **Removing `ElementsCamera` undoes the dressing** (bevy_grimoire#193, this crate's #55).
+///
+/// The editor adds `ElementsCamera` to its map camera when a project has `family/bevy_elements.ron` and
+/// removes it when the file is deleted. Until now nothing observed `Remove<ElementsCamera>`, so the
+/// camera kept the atmosphere, both fogs, the depth prepass and `Msaa::Off`, and the host's plain view
+/// never came back: deleting the settings file did nothing, and only a restart fixed it.
+///
+/// The crate records what it inserted in a private marker, so this test asserts on the **public**
+/// components a consumer can see — which is the contract the editor actually depends on.
+#[test]
+#[ignore = "needs a GPU"]
+fn removing_the_camera_undoes_the_dressing() {
+    let _lock = serial();
+    let mut app = app(CelestialSettings::default(), |world| {
+        let e = world
+            .spawn((Camera3d::default(), ElementsCamera::default()))
+            .id();
+        world.insert_resource(Cam(e));
+        // A camera the crate never touched: its removal must not disturb this one.
+        let own = world.spawn(Camera3d::default()).id();
+        world.insert_resource(OwnCamera(own));
+    });
+    run(&mut app, 10);
+    let e = app.world().resource::<Cam>().0;
+
+    assert!(
+        app.world().get::<AtmosphereSettings>(e).is_some(),
+        "precondition: the camera is dressed before the removal"
+    );
+
+    app.world_mut().entity_mut(e).remove::<ElementsCamera>();
+    run(&mut app, 10);
+
+    let world = app.world();
+    for (name, present) in [
+        ("AtmosphereSettings", world.get::<AtmosphereSettings>(e).is_some()),
+        (
+            "AtmosphereEnvironmentMapLight",
+            world.get::<AtmosphereEnvironmentMapLight>(e).is_some(),
+        ),
+        ("DepthPrepass", world.get::<DepthPrepass>(e).is_some()),
+        ("VolumetricFog", world.get::<VolumetricFog>(e).is_some()),
+        ("DistanceFog", world.get::<DistanceFog>(e).is_some()),
+    ] {
+        assert!(
+            !present,
+            "{name} must come off the camera when ElementsCamera does, or a host cannot go back to its own look"
+        );
+    }
+    let msaa = world.get::<Msaa>(e).copied().unwrap_or_default();
+    assert_eq!(
+        msaa,
+        Msaa::default(),
+        "Msaa must go back to its default, not stay Off"
+    );
+
+    let own = app.world().resource::<OwnCamera>().0;
+    assert!(
+        app.world().get::<DistanceFog>(own).is_none(),
+        "a camera the crate never dressed is not touched by another camera's removal"
+    );
+}
+
+/// The game's own camera in [`removing_the_camera_undoes_the_dressing`].
+#[derive(Resource)]
+struct OwnCamera(Entity);
