@@ -696,48 +696,46 @@ fn dress_camera(add: On<Add<ElementsCamera>>, mut dresser: Dresser) {
 /// to undress, and the components went with it.
 fn undress_camera(remove: On<Remove<ElementsCamera>>, mut commands: Commands, dressed: Query<&ElementsDressing>) {
     let entity = remove.entity;
-    // **`Remove` fires for a despawned camera too**, and every line below is a command that runs
-    // later, when the entity may be gone. `get_entity` is the check, and the removals are queued
-    // only when it resolves: Bevy's default handler turns a command aimed at a despawned entity into
-    // a panic, which closed the editor with `EXIT=101` on bevy_grimoire 2026-11-03
-    // (`remove::<(AtmosphereSettings, AtmosphereEnvironmentMapLight)>: Entity despawned`).
     let Ok(ours) = dressed.get(entity) else {
         return;
     };
     let ours = *ours;
-    let Ok(mut e) = commands.get_entity(entity) else {
-        return;
+    // **Every command is `queue_silenced`.** `Remove<ElementsCamera>` fires while an entity is being
+    // despawning as well as when the component comes off a live camera, and each command runs at the
+    // *next flush* — by which time the entity may be gone even though it resolved when queued
+    // (measured: `get_entity` succeeding and `remove::<DepthPrepass>` still panicking, on
+    // bevy_grimoire 2026-11-03). Bevy's default handler escalates that to a panic that closes the
+    // window with `EXIT=101`, so nothing here may report an error: a camera that is gone has nothing
+    // to undress and its components went with it.
+    let mut e = commands.entity(entity);
+    let silence = |e: &mut EntityCommands, ours: ElementsDressing| {
+        if ours.atmosphere {
+            e.queue_silenced(bevy::ecs::system::entity_command::remove::<(AtmosphereSettings, AtmosphereEnvironmentMapLight)>());
+        }
+        if ours.depth_prepass {
+            e.queue_silenced(bevy::ecs::system::entity_command::remove::<DepthPrepass>());
+        }
+        if ours.volumetric_fog {
+            e.queue_silenced(bevy::ecs::system::entity_command::remove::<VolumetricFog>());
+        }
+        if ours.distance_fog {
+            e.queue_silenced(bevy::ecs::system::entity_command::remove::<DistanceFog>());
+        }
+        if ours.ambient {
+            e.queue_silenced(bevy::ecs::system::entity_command::remove::<AmbientLight>());
+        }
+        if ours.msaa {
+            e.queue_silenced(bevy::ecs::system::entity_command::insert(
+                Msaa::default(),
+                bevy::ecs::bundle::InsertMode::Replace,
+            ));
+        }
+        if ours.sky_background {
+            e.queue_silenced(bevy::ecs::system::entity_command::remove::<SkyBackground>());
+        }
+        e.queue_silenced(bevy::ecs::system::entity_command::remove::<ElementsDressing>());
     };
-    if ours.atmosphere {
-        e.remove::<(AtmosphereSettings, AtmosphereEnvironmentMapLight)>();
-    }
-    if ours.depth_prepass {
-        e.remove::<DepthPrepass>();
-    }
-    if ours.volumetric_fog {
-        e.remove::<VolumetricFog>();
-    }
-    if ours.distance_fog {
-        e.remove::<DistanceFog>();
-    }
-    if ours.ambient {
-        e.remove::<AmbientLight>();
-    }
-    if ours.msaa {
-        // **Silenced**, because `insert` aimed at a camera that despawns before the flush is an
-        // error, and Bevy's default handler turns that into a panic. `get_entity` above only proves
-        // the entity was alive when this command was *queued*; a despawn queued in the same frame
-        // lands first. Measured on bevy_grimoire 2026-11-03: `insert<Msaa>: Entity despawned:
-        // 961v0` closed the window with `EXIT=101`, the last of this observer's commands to need it.
-        e.queue_silenced(bevy::ecs::system::entity_command::insert(
-            Msaa::default(),
-            bevy::ecs::bundle::InsertMode::Replace,
-        ));
-    }
-    if ours.sky_background {
-        e.remove::<SkyBackground>();
-    }
-    e.remove::<ElementsDressing>();
+    silence(&mut e, ours);
 }
 
 /// Dress again a camera whose flags changed: a game can toggle the physical sky at runtime.
