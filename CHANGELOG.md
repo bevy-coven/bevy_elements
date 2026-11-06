@@ -1,5 +1,15 @@
 ## [Unreleased]
 
+### Fixed
+
+- **A jump of the clock no longer leaves the picture over-exposed (#56).** Setting `WorldClock::hour` (or the date) by more than one game minute between frames is now a cut: every `ElementsCamera` with `auto_exposure` takes the new hour's exposure at once instead of easing in over `EXPOSURE_TAU_S`, and the followed camera's sky probe drops its cloud history and recomposes, so neither carries the old hour's light into the new one. The clock's own advance at any `time_scale` is not a jump. `tests/gpu_clock_jump.rs` jumps noon → 23:00 and 23:00 → noon and holds every frame of the next 30 s within 20 % of the settled picture.
+- **Removing or despawning a dressed `ElementsCamera` no longer panics.** Removing the component undoes the dressing (`41407d6`); every command `undress_camera` queues is `queue_silenced`, and a camera on its way out is not dressed again, so a camera despawned in the same frame no longer closes the app with `Entity despawned` (`94e36d9`, `1d180c6`, `5d71dbd`, `0778a62`; bevy_grimoire 2026-11-03).
+- **`perlin3_periodic` and `fbm3_periodic` were each declared twice in `noise.wesl`** (`0a285de`).
+
+### Changed
+
+- README: the editor is the Cauldron; the book's section is "Use it in the Cauldron" (`1787e7b`).
+
 ## [0.7.8] - 2026-10-31
 
 ### Fixed
