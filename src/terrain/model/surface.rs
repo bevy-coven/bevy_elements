@@ -4,7 +4,10 @@
 
 use bevy::math::{UVec2, Vec2, Vec3};
 
-use super::{F_HALF, GAIN, LACUNARITY, OCTAVE_ROTATION, R_LOW, R_SPAN, octave_count, seed_mix};
+use super::{
+    F_HALF, GAIN, LACUNARITY, OCTAVE_ROTATION, R_LOW, R_SPAN, octave_count, sampled_feature_m,
+    seed_mix,
+};
 use crate::gpu::perlin::perlin3_d;
 use crate::terrain::ProceduralTerrain;
 
@@ -38,20 +41,27 @@ pub(crate) fn unit_height(f: f32, r: f32, ridged: f32) -> f32 {
 }
 
 /// The surface height at a point `local_xz` metres from the terrain's minimum corner, relative
-/// to the terrain transform: the base height plus the relief times the unit value.
-pub(crate) fn surface_height(p: &ProceduralTerrain, octaves: u32, local_xz: Vec2) -> f32 {
-    let (f, r) = noise_sums(local_xz, p.feature_size_m, octaves, p.seed);
+/// to the terrain transform: the base height plus the relief times the unit value, the noise
+/// sampled at the base wavelength `feature_m` ([`sampled_feature_m`]).
+pub(crate) fn surface_height(
+    p: &ProceduralTerrain,
+    feature_m: f32,
+    octaves: u32,
+    local_xz: Vec2,
+) -> f32 {
+    let (f, r) = noise_sums(local_xz, feature_m, octaves, p.seed);
     p.base_height_m + p.relief_m * unit_height(f, r, p.ridged.clamp(0.0, 1.0))
 }
 
 /// The generated surface at every cell of a `size` grid of `cell_m` cells, row-major.
 pub(crate) fn generate_surface(p: &ProceduralTerrain, size: UVec2, cell_m: f32) -> Vec<f32> {
     let octaves = octave_count(p.octaves, p.feature_size_m, cell_m);
+    let feature_m = sampled_feature_m(p.feature_size_m, cell_m);
     let mut out = Vec::with_capacity((size.x * size.y) as usize);
     for j in 0..size.y {
         for i in 0..size.x {
             let local = (Vec2::new(i as f32, j as f32) + 0.5) * cell_m;
-            out.push(surface_height(p, octaves, local));
+            out.push(surface_height(p, feature_m, octaves, local));
         }
     }
     out
