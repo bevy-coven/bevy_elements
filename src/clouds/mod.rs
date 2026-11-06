@@ -32,8 +32,8 @@ use bevy::render::storage::ShaderBuffer;
 use bevy::shader::load_shader_library;
 
 use crate::celestial::{
-    CelestialFrame, CelestialSettings, CloudLight, MOON_TINT, NIGHT_SKY_LUMINANCE, Sun, SunState,
-    beam_transmittance, cloud_ambient, scene_illuminance, sky_clear_gain, sky_gain,
+    CelestialFrame, CelestialSettings, ClockJump, CloudLight, MOON_TINT, NIGHT_SKY_LUMINANCE, Sun,
+    SunState, beam_transmittance, cloud_ambient, scene_illuminance, sky_clear_gain, sky_gain,
 };
 use crate::climate::Weather;
 use crate::flash::LightningFlash;
@@ -775,11 +775,13 @@ const PROBE_HISTORY_WEIGHT: f32 = 0.25;
 /// The followed camera's sky probe (`docs/research/sky-light.md`, Model 5–7): images of the size
 /// of its atmosphere cube, and the environment map handed over to the composed cube once every
 /// texel has been marched. A camera that stops being followed, or whose atmosphere cube is
-/// replaced, gets the atmosphere cube back until a new probe is composed.
+/// replaced, gets the atmosphere cube back until a new probe is composed; so does the followed
+/// camera on the frame the clock jumps ([`ClockJump`]), because the probe's cloud history holds
+/// the old hour's cloud light and would light the new hour with it for as long as the history
+/// takes to forget it (issue #56).
 fn update_sky_probe(
     mut commands: Commands,
-    view: Res<ElementsView>,
-    quality: Res<ElementsQuality>,
+    (view, quality, jump): (Res<ElementsView>, Res<ElementsQuality>, Res<ClockJump>),
     mut images: ResMut<Assets<Image>>,
     mut gpu: ResMut<CloudGpu>,
     mut cameras: Query<(
@@ -820,10 +822,11 @@ fn update_sky_probe(
         return;
     };
     let block = CloudQuality::of(*quality).probe_block(size);
-    let current = gpu
-        .probe
-        .as_ref()
-        .is_some_and(|p| p.atmosphere == atmosphere && p.size == size && p.block == block);
+    let current = !jump.jumped
+        && gpu
+            .probe
+            .as_ref()
+            .is_some_and(|p| p.atmosphere == atmosphere && p.size == size && p.block == block);
     if !current {
         let fresh = sky_probe_images(&mut images, atmosphere.clone(), size, block);
         gpu.probe_frames.store(0, Ordering::Relaxed);

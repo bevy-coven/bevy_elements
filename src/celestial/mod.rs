@@ -13,7 +13,7 @@ use bevy::light::light_consts::lux;
 use bevy::light::{CascadeShadowConfig, CascadeShadowConfigBuilder, SunDisk, VolumetricLight};
 use bevy::prelude::*;
 
-pub(crate) use clock::plugin as clock_plugin;
+pub(crate) use clock::{ClockJump, plugin as clock_plugin};
 pub use clock::{CivilDate, GeoLocation, WorldClock};
 
 use crate::climate::Weather;
@@ -834,6 +834,7 @@ pub(crate) struct ExposureSky<'w> {
 fn auto_exposure(
     time: Res<Time<Real>>,
     sky: ExposureSky,
+    jump: Res<ClockJump>,
     mut published: ResMut<ElementsExposure>,
     mut cameras: Query<(Entity, Option<&ElementsCamera>, &mut Exposure)>,
     mut adapted: Local<Vec<Entity>>,
@@ -844,6 +845,14 @@ fn auto_exposure(
     let target = ev100_for(scene_illuminance(&sky.state, sky.frame.moon_lux, cloud)).max(
         ev100_for_glow(sky.state.altitude_deg, sky.weather.cloud_cover),
     );
+    // Adaptation models an eye following one continuous scene (Pattanaik et al. 2000, DOI
+    // 10.1145/344779.344810), as video tone mapping smooths its key over time within a sequence
+    // (Aydin et al. 2014, DOI 10.1145/2661229.2661268, §2). A jump of the clock is a cut, not a
+    // sequence: easing in from the old hour would show a night at noon's exposure, or the
+    // reverse, for seconds (issue #56), so the adaptation starts again at the new hour's target.
+    if jump.jumped {
+        adapted.clear();
+    }
     let k = 1.0 - (-time.delta_secs() / EXPOSURE_TAU_S).exp();
     for (entity, camera, mut exposure) in &mut cameras {
         let Some(camera) = camera else {

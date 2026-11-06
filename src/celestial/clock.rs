@@ -194,19 +194,46 @@ impl GeoLocation {
     }
 }
 
-pub(crate) fn advance_clock(time: Res<Time<Virtual>>, mut clock: ResMut<WorldClock>) {
-    if clock.paused {
-        return;
+/// The smallest change of the clock between two frames, other than its own advance, that counts
+/// as a jump, hours: one game minute, sixty times the clock's own step at the default
+/// `time_scale` and 60 fps, so a clock a game drives smoothly itself is not taken for one.
+const CLOCK_JUMP_MIN_HOURS: f64 = 1.0 / 60.0;
+
+/// Whether the clock jumped this frame: something other than [`advance_clock`] moved it by at
+/// least [`CLOCK_JUMP_MIN_HOURS`] since the last frame (a game setting [`WorldClock::hour`] or
+/// the date). The state that follows the light smoothly over real time — the camera's exposure
+/// adaptation and the sky probe's cloud history — starts again from the new hour instead of
+/// carrying the old hour's light across the cut (issue #56).
+#[derive(Resource, Default, Debug)]
+pub(crate) struct ClockJump {
+    /// The clock's hour count after the last frame's advance.
+    last_hours: Option<f64>,
+    /// Set on the frame the jump is seen, for every system after [`ElementsSystems::Clock`].
+    pub jumped: bool,
+}
+
+pub(crate) fn advance_clock(
+    time: Res<Time<Virtual>>,
+    mut clock: ResMut<WorldClock>,
+    mut jump: ResMut<ClockJump>,
+) {
+    let before = clock.hours_since_2000();
+    jump.jumped = jump
+        .last_hours
+        .is_some_and(|last| (before - last).abs() >= CLOCK_JUMP_MIN_HOURS);
+    if !clock.paused {
+        let hours = time.delta_secs_f64() * f64::from(clock.time_scale) / 3600.0;
+        if hours != 0.0 {
+            clock.advance_hours(hours);
+        }
     }
-    let hours = time.delta_secs_f64() * f64::from(clock.time_scale) / 3600.0;
-    if hours != 0.0 {
-        clock.advance_hours(hours);
-    }
+    jump.last_hours = Some(clock.hours_since_2000());
 }
 
 pub(crate) fn plugin(app: &mut App) {
     app.init_resource::<WorldClock>()
         .init_resource::<GeoLocation>()
+        .init_resource::<ClockJump>()
         .add_systems(Update, advance_clock.in_set(ElementsSystems::Clock));
 }
 
@@ -242,5 +269,36 @@ mod tests {
         clock.advance_hours(-1.0);
         assert_eq!(clock.date, CivilDate::new(2026, 12, 31));
         assert!((clock.hour - 23.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn a_set_clock_is_a_jump_and_its_own_advance_is_not() {
+        let mut world = World::new();
+        world.insert_resource(Time::<Virtual>::default());
+        world.insert_resource(WorldClock::default());
+        world.init_resource::<ClockJump>();
+        let mut schedule = Schedule::default();
+        schedule.add_systems(advance_clock);
+        let mut step = |world: &mut World| {
+            schedule.run(world);
+            world.resource::<ClockJump>().jumped
+        };
+        assert!(
+            !step(&mut world),
+            "the first frame has nothing to jump from"
+        );
+        // Ten real seconds at 60× is ten game minutes of the clock's own advance.
+        world
+            .resource_mut::<Time<Virtual>>()
+            .advance_by(std::time::Duration::from_secs(10));
+        assert!(!step(&mut world), "the clock's own advance");
+        world.resource_mut::<WorldClock>().hour += 0.5 * CLOCK_JUMP_MIN_HOURS;
+        assert!(!step(&mut world), "a step below the threshold");
+        world.resource_mut::<WorldClock>().hour = 23.0;
+        assert!(step(&mut world), "a set hour");
+        assert!(!step(&mut world), "the frame after the jump");
+        let date = world.resource::<WorldClock>().date;
+        world.resource_mut::<WorldClock>().date = date.add_days(1);
+        assert!(step(&mut world), "a set date");
     }
 }
