@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-06
+
 ### Changed
 
 - **Breaking: strokes and restores are one message, `TerrainEdit` (#54).** `SculptTerrain` and `RestoreTerrain` are no longer `Message`s; send either as `TerrainEdit::Stroke(..)` / `TerrainEdit::Restore(..)` (both convert with `.into()`) through `MessageWriter<TerrainEdit>`. Two message types carry no order between them, so within one frame every stroke ran ahead of every restore: an undo followed by a redo in the same frame, or an edit log replayed in one system, ended with the restore erasing the strokes sent after it. Edits now run in the order sent, within a frame and across frames, one per frame. Migration: `MessageWriter<SculptTerrain>` → `MessageWriter<TerrainEdit>` and `w.write(stroke)` → `w.write(stroke.into())`; the same for `RestoreTerrain`.
