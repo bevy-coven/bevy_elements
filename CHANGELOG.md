@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Fixed
+
+- **Rainbows are drawn by rain, not by falling snow (#51).** The bow's gate, drop size and curtain took `Weather::precipitation_mm_h`, the water equivalent of rain and snow together, so a full double bow stood over falling snow opposite a low sun, and sleet drew the bow of its whole rate. The gate and drop size now take the rain, `precipitation_mm_h · (1 − snow_fraction())`, and the curtain shares its light between rain and snow by their extinction (the crate's laws, snow some twenty to thirty times as opaque per mm/h), so only the rain's part makes the bow. Measured on the Apple M1 Max (`tests/gpu_rainbow.rs`, 5 mm/h, sun 21.8°): at −5 °C the primary's band adds 0 (was 0.067 on a sky of 0.59, the frame now byte-identical with the bow off); at 0.5 °C (half snow) 0.0091, an eighth of the rain's 0.071 (was 0.068); rain is unchanged (byte-identical frame). The bow fades continuously through the sleet band instead of vanishing at −1 °C. `CloudParams` gains `shower` (a uniform tail; no API change). Assumed decision on #51. `docs/research/rainbow.md` Deviations 4 and 5.
+
 ## [0.7.8] - 2026-10-31
 
 ### Fixed
