@@ -86,13 +86,13 @@ fn load_level(world: &mut World) {
 
 ## Sculpting the live terrain
 
-Send a `SculptTerrain` message to edit the running terrain: a brush at a metre-frame XZ with a radius, a `hardness` (the fraction of the radius at full effect; the weight then falls as a smoothstep, so the rim leaves no crease) and a kind: `Raise`, `Lower`, `Smooth`, `Flatten { height_m, blend }` or `Noise { amplitude_m, feature_m, seed }`. The stroke edits bedrock on the GPU (sediment stays), one stroke is applied per frame in order, and the drawn ground, the rocks, the cover and `Environment::terrain_height` follow it the next frame. Nothing outside the radius changes. `SculptTerrain::validate()` names a field that breaks its bound; an invalid stroke is dropped with a warning.
+Send a `SculptTerrain` stroke, as a `TerrainEdit` message, to edit the running terrain: a brush at a metre-frame XZ with a radius, a `hardness` (the fraction of the radius at full effect; the weight then falls as a smoothstep, so the rim leaves no crease) and a kind: `Raise`, `Lower`, `Smooth`, `Flatten { height_m, blend }` or `Noise { amplitude_m, feature_m, seed }`. The stroke edits bedrock on the GPU (sediment stays), one edit is applied per frame in the order sent, and the drawn ground, the rocks, the cover and `Environment::terrain_height` follow it the next frame. Nothing outside the radius changes. `SculptTerrain::validate()` names a field that breaks its bound; an invalid stroke is dropped with a warning.
 
 ```rust
 # use bevy::prelude::*;
-# use bevy_elements::{SculptKind, SculptTerrain};
-fn dig_a_pit(mut strokes: MessageWriter<SculptTerrain>) {
-    strokes.write(SculptTerrain::new(Vec2::new(40.0, -12.0), 6.0, SculptKind::Lower { amount_m: 1.5 }));
+# use bevy_elements::{SculptKind, SculptTerrain, TerrainEdit};
+fn dig_a_pit(mut edits: MessageWriter<TerrainEdit>) {
+    edits.write(SculptTerrain::new(Vec2::new(40.0, -12.0), 6.0, SculptKind::Lower { amount_m: 1.5 }).into());
 }
 ```
 
@@ -108,13 +108,13 @@ fn save_and_restore(env: Environment, mut images: ResMut<Assets<Image>>, mut com
 }
 ```
 
-To undo a stroke in place (any kind, including the ones with no `inverse`), take `Environment::terrain_snapshot()` before it and later send `RestoreTerrain::new(snapshot, region_m)`: every cell whose centre lies in the metre-frame `Rect` gets the snapshot's bedrock and sediment back, in order with the strokes, and nothing else (water, cover, trails) is touched. A snapshot read from another grid is dropped with a warning.
+To undo a stroke in place (any kind, including the ones with no `inverse`), take `Environment::terrain_snapshot()` before it and later send `RestoreTerrain::new(snapshot, region_m)` as a `TerrainEdit`: every cell whose centre lies in the metre-frame `Rect` gets the snapshot's bedrock and sediment back, in the order sent with the strokes (strokes and restores share the one message, so an undo followed by a redo in the same frame runs in that order), and nothing else (water, cover, trails) is touched. The snapshot's grid is checked against the terrain live when the restore's turn comes: a snapshot read from another grid, or from a terrain rebuilt while the restore waited, is dropped with a warning.
 
 ```rust
 # use bevy::prelude::*;
 # use bevy_elements::*;
-fn undo(env: Environment, mut restores: MessageWriter<RestoreTerrain>, before: Res<Saved>) {
-    restores.write(RestoreTerrain::new(before.0.clone(), Rect::new(20.0, -30.0, 70.0, 10.0)));
+fn undo(mut edits: MessageWriter<TerrainEdit>, before: Res<Saved>) {
+    edits.write(RestoreTerrain::new(before.0.clone(), Rect::new(20.0, -30.0, 70.0, 10.0)).into());
 }
 # #[derive(Resource)] struct Saved(TerrainSnapshot);
 ```

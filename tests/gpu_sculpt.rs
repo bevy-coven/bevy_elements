@@ -128,7 +128,9 @@ impl Sim {
             .terrain
             .version
             .load(std::sync::atomic::Ordering::Relaxed);
-        self.app.world_mut().write_message(stroke);
+        self.app
+            .world_mut()
+            .write_message(TerrainEdit::from(stroke));
         let version = self.terrain.version.clone();
         self.run_until("the stroke", move |_| {
             version.load(std::sync::atomic::Ordering::Relaxed) > before
@@ -388,7 +390,10 @@ fn gpu_a_restored_region_takes_the_old_ground_back_and_only_there() {
     let seen = version.load(std::sync::atomic::Ordering::Relaxed);
     sim.app
         .world_mut()
-        .write_message(RestoreTerrain::new(before.clone(), region));
+        .write_message(TerrainEdit::from(RestoreTerrain::new(
+            before.clone(),
+            region,
+        )));
     sim.run_until("the restore", move |_| {
         version.load(std::sync::atomic::Ordering::Relaxed) > seen
     });

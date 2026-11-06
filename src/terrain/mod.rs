@@ -56,7 +56,7 @@ use model::{
 };
 pub use model::{TerrainGrid, TerrainSnapshot};
 pub use sculpt::{
-    DEFAULT_SCULPT_HARDNESS, RestoreTerrain, SculptKind, SculptTerrain, sculpt_weight,
+    DEFAULT_SCULPT_HARDNESS, RestoreTerrain, SculptKind, SculptTerrain, TerrainEdit, sculpt_weight,
 };
 pub use textures::{GroundLayerTextures, TerrainTextures};
 
@@ -550,8 +550,7 @@ impl Plugin for TerrainPlugin {
             MaterialPlugin::<TerrainMaterial>::default(),
             MaterialPlugin::<GroundMaterial>::default(),
         ))
-        .add_message::<SculptTerrain>()
-        .add_message::<RestoreTerrain>()
+        .add_message::<TerrainEdit>()
         .init_resource::<sculpt::SculptQueue>()
         .init_resource::<TerrainRuntime>()
         .init_resource::<textures::GroundTexturePack>()
