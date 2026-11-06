@@ -68,3 +68,26 @@ fn an_empty_grid_or_a_bad_cell_size_gives_nothing() {
         assert!(p.sample_surface(UVec2::splat(4), bad).is_empty(), "{bad}");
     }
 }
+
+#[test]
+fn a_feature_finer_than_a_cell_samples_like_the_kernel() {
+    // The kernel never samples features finer than a cell (it divides by max(feature, cell)), so
+    // these two draw the same ground; both have one octave at this cell size.
+    let fine = ProceduralTerrain::dunes(1);
+    let at_cell = ProceduralTerrain {
+        feature_size_m: 312.5,
+        ..fine
+    };
+    assert_eq!(
+        fine.sample_surface(UVec2::splat(64), 312.5),
+        at_cell.sample_surface(UVec2::splat(64), 312.5)
+    );
+    // A zero feature size draws features one cell wide, finite everywhere.
+    let zero = ProceduralTerrain {
+        feature_size_m: 0.0,
+        ..fine
+    };
+    let heights = zero.sample_surface(UVec2::splat(8), 4.0);
+    assert_eq!(heights.len(), 64);
+    assert!(heights.iter().all(|h| h.is_finite()), "{heights:?}");
+}

@@ -92,7 +92,8 @@ pub use lightning::{
 // Terrain.
 pub use terrain::{
     DEFAULT_SCULPT_HARDNESS, GroundExtension, GroundLayerTextures, GroundMaterial, GroundParams,
-    ProceduralTerrain, RestoreTerrain, SculptKind, SculptTerrain, Terrain, TerrainExtension,
+    ProceduralTerrain, RestoreTerrain, SculptKind, SculptTerrain, Terrain, TerrainEdit,
+    TerrainExtension,
     TerrainExtensionKey, TerrainGrid, TerrainLook, TerrainMaterial, TerrainMaterialParams,
     TerrainPlugin, TerrainRender, TerrainSnapshot, TerrainSource, TerrainState, TerrainTextures,
     sculpt_weight,

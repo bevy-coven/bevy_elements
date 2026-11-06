@@ -34,7 +34,8 @@ No kernel. Two row-wise `write_buffer` calls per region row (bedrock, sediment),
 
 ## Deviations from this plan
 
-None.
+1. **One message for strokes and restores (#54, 2026-11-06).** Items 1 and 2 promised "in order with the strokes", but two message types carry no order between them: the plugin read every `SculptTerrain` of a frame before every `RestoreTerrain`, so a same-frame undo then redo ran redo-first and the restore erased it. `SculptTerrain` and `RestoreTerrain` are now plain values sent as one `Message`, `TerrainEdit { Stroke, Restore }`, read by one reader; the order sent is the order applied, within a frame and across frames.
+2. **The grid is checked when the restore's turn comes, not when it is read (#52, 2026-11-06).** Item 4's check ran at read time and only with a terrain live, but the edit queue outlives a terrain: a restore read before the terrain spawned, or still queued when the terrain was rebuilt at another resolution, was written with the new grid's row stride (past the layers on a smaller grid). The cut keeps its snapshot's grid and is compared with the live grid when it is popped; a mismatch is dropped with the same warning.
 
 ## Pending index
 

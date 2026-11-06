@@ -123,6 +123,13 @@ pub(crate) fn octave_count(requested: u32, feature_m: f32, cell_m: f32) -> u32 {
     requested.min(nyquist).max(1)
 }
 
+/// The base wavelength the generator samples, m: the requested feature size, never finer than a
+/// cell. Shared by the kernel's parameters and the CPU generator, so the two sample one lattice; a
+/// feature size of 0 (or below a cell) draws features one cell wide.
+pub(crate) fn sampled_feature_m(feature_m: f32, cell_m: f32) -> f32 {
+    feature_m.max(cell_m)
+}
+
 /// The seed's contribution to the octave lattice offsets: `(seed · 2654435761) mod 4096`.
 pub(crate) fn seed_mix(seed: u64) -> u32 {
     (seed.wrapping_mul(2_654_435_761) % 4096) as u32

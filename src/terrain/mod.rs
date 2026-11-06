@@ -56,7 +56,7 @@ use model::{
 };
 pub use model::{TerrainGrid, TerrainSnapshot};
 pub use sculpt::{
-    DEFAULT_SCULPT_HARDNESS, RestoreTerrain, SculptKind, SculptTerrain, sculpt_weight,
+    DEFAULT_SCULPT_HARDNESS, RestoreTerrain, SculptKind, SculptTerrain, TerrainEdit, sculpt_weight,
 };
 pub use textures::{GroundLayerTextures, TerrainTextures};
 
@@ -154,7 +154,9 @@ impl ProceduralTerrain {
     /// The surface this generator draws, evaluated on the CPU: `size.x × size.y` heights, m,
     /// row-major (`z * size.x + x`), the height of cell `(x, z)` taken at its centre
     /// `((x, z) + ½) · cell_m` from the terrain's minimum corner, relative to the terrain
-    /// transform, with the octave count the GPU kernel uses for that cell size. Needs no app, no
+    /// transform, with the octave count and the base wavelength the GPU kernel uses for that cell
+    /// size: a [`feature_size_m`](Self::feature_size_m) finer than `cell_m` (0 included) is
+    /// sampled at `cell_m`, as the kernel does. Needs no app, no
     /// GPU and no [`TerrainPlugin`]: a tool can bake a preset into a height map, a game can
     /// preview it or test against it. The kernel evaluates the same noise in `f32` on the GPU,
     /// so the two agree to within the sampling tolerance of `terrain.md`, not bit for bit. It
@@ -548,8 +550,7 @@ impl Plugin for TerrainPlugin {
             MaterialPlugin::<TerrainMaterial>::default(),
             MaterialPlugin::<GroundMaterial>::default(),
         ))
-        .add_message::<SculptTerrain>()
-        .add_message::<RestoreTerrain>()
+        .add_message::<TerrainEdit>()
         .init_resource::<sculpt::SculptQueue>()
         .init_resource::<TerrainRuntime>()
         .init_resource::<textures::GroundTexturePack>()
@@ -665,7 +666,7 @@ fn ensure_terrain(
                 size: UVec4::new(size.x, size.y, octaves, seed_mix(p.seed)),
                 shape: Vec4::new(
                     cell,
-                    p.feature_size_m.max(cell),
+                    model::sampled_feature_m(p.feature_size_m, cell),
                     p.relief_m,
                     p.ridged.clamp(0.0, 1.0),
                 ),

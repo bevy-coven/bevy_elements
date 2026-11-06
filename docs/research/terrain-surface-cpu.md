@@ -34,6 +34,8 @@ None. It is the CPU twin of `generate.wesl`; the GPU reads back through `Environ
 
 1. No new model and no changed default. The CPU evaluates in `f32` with `sin_cos` and `powi` where the GPU uses its own intrinsics, so the two agree within the tolerance above and not bit for bit. The doc comment says so.
 
+2. **The base wavelength is `max(feature_size_m, cell_m)`, as the kernel's (#53, 2026-11-06).** The CPU generator divided by the raw `feature_size_m`, so a preset finer than its grid's cell (`dunes`, 300 m features, at 312.5 m cells) sampled another lattice than the kernel and `feature_size_m = 0` gave NaN. Both now call `terrain::model::sampled_feature_m`.
+
 ## Pending index
 
 None: no new document.

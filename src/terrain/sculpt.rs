@@ -1,7 +1,8 @@
-//! Hand edits of the live terrain: [`SculptTerrain`], one brush stroke over the bedrock layer.
+//! Hand edits of the live terrain: [`SculptTerrain`], one brush stroke over the bedrock layer,
+//! and [`RestoreTerrain`], a region put back from a snapshot.
 //!
-//! A stroke is a [`Message`]. The terrain plugin queues them and sends one per frame to the
-//! render world, which runs `sculpt.wesl` at the head of the terrain's compute pass, so the pack,
+//! Both are sent as one [`Message`], [`TerrainEdit`], so the edits of one frame keep the order
+//! they were sent in. The terrain plugin queues them and sends one per frame to the render world, which runs `sculpt.wesl` at the head of the terrain's compute pass, so the pack,
 //! the leaf bounds and the height readback of the same frame carry the edit: the drawn ground, the
 //! rocks, the cover and [`Environment::terrain_height`](crate::Environment::terrain_height) all
 //! follow it. Bedrock moves and sediment stays (`docs/research/terrain-sculpt.md`).
@@ -54,8 +55,9 @@ pub enum SculptKind {
     },
 }
 
-/// One brush stroke on the live [`Terrain`](crate::Terrain), applied on the next frame the
-/// terrain is live. A drag is a message per sample; one is applied per frame, in order.
+/// One brush stroke on the live [`Terrain`](crate::Terrain), sent as a [`TerrainEdit`] and applied
+/// on the next frame the terrain is live. A drag is an edit per sample; one is applied per frame,
+/// in the order sent.
 ///
 /// ```
 /// # use bevy_elements::{SculptKind, SculptTerrain};
@@ -63,7 +65,7 @@ pub enum SculptKind {
 /// let hill = SculptTerrain::new(Vec2::new(100.0, -40.0), 60.0, SculptKind::Raise { amount_m: 5.0 });
 /// assert!(hill.validate().is_ok());
 /// ```
-#[derive(Message, Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct SculptTerrain {
     /// Centre of the brush, world XZ in the metre frame (what every query takes).
     pub centre_m: Vec2,
@@ -233,13 +235,16 @@ impl SculptParamsGpu {
 /// respawning the terrain and so without losing the water, the cover maps or the trails.
 ///
 /// Every cell whose centre lies in `region_m` takes the snapshot's bedrock (`surface − sediment`)
-/// and sediment; every other cell is left as it is. The restore is applied in order with
-/// [`SculptTerrain`] strokes, one edit per frame, and the drawn ground, the rocks, the cover and
+/// and sediment; every other cell is left as it is. Sent as a [`TerrainEdit`], the restore is
+/// applied in the order sent with [`SculptTerrain`] strokes, within a frame and across frames, one
+/// edit per frame, and the drawn ground, the rocks, the cover and
 /// [`Environment::terrain_height`](crate::Environment::terrain_height) follow like they follow a
 /// stroke. Take the snapshot with
-/// [`Environment::terrain_snapshot`](crate::Environment::terrain_snapshot) before the stroke; one
-/// whose grid differs from the live terrain's (another terrain, or a readback coarser than the
-/// simulation above 1024² cells) is dropped with a warning. Water is not restored.
+/// [`Environment::terrain_snapshot`](crate::Environment::terrain_snapshot) before the stroke. The
+/// snapshot's grid is checked against the terrain that is live when the restore's turn comes (a
+/// restore sent while no terrain is live waits for one): a snapshot from another grid (another
+/// terrain, a terrain rebuilt while the restore waited, or a readback coarser than the simulation
+/// above 1024² cells) is dropped with a warning. Water is not restored.
 ///
 /// ```
 /// # use bevy_elements::{RestoreTerrain, TerrainGrid, TerrainSnapshot};
@@ -255,7 +260,7 @@ impl SculptParamsGpu {
 /// let undo = RestoreTerrain::new(before, Rect::new(2.0, 2.0, 6.0, 6.0));
 /// assert!(undo.validate().is_ok());
 /// ```
-#[derive(Message, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct RestoreTerrain {
     /// The ground to restore from.
     pub snapshot: TerrainSnapshot,
@@ -290,6 +295,40 @@ impl RestoreTerrain {
     }
 }
 
+/// A hand edit of the live terrain: the one message the terrain plugin reads for strokes and
+/// restores, so edits sent in one frame keep their order (two message types carry none between
+/// them). Edits are applied one per frame, in the order sent.
+///
+/// ```
+/// # use bevy::prelude::*;
+/// # use bevy_elements::{RestoreTerrain, SculptKind, SculptTerrain, TerrainEdit, TerrainSnapshot};
+/// // Undo to `before`, then raise a hill inside the restored region: the hill stays.
+/// fn redo(mut edits: MessageWriter<TerrainEdit>, before: Res<Saved>) {
+///     edits.write(RestoreTerrain::new(before.0.clone(), Rect::new(0.0, 0.0, 100.0, 100.0)).into());
+///     edits.write(SculptTerrain::new(Vec2::splat(50.0), 10.0, SculptKind::Raise { amount_m: 2.0 }).into());
+/// }
+/// # #[derive(Resource)] struct Saved(TerrainSnapshot);
+/// ```
+#[derive(Message, Clone, Debug)]
+pub enum TerrainEdit {
+    /// A brush stroke.
+    Stroke(SculptTerrain),
+    /// A region put back from a snapshot.
+    Restore(RestoreTerrain),
+}
+
+impl From<SculptTerrain> for TerrainEdit {
+    fn from(stroke: SculptTerrain) -> Self {
+        Self::Stroke(stroke)
+    }
+}
+
+impl From<RestoreTerrain> for TerrainEdit {
+    fn from(restore: RestoreTerrain) -> Self {
+        Self::Restore(restore)
+    }
+}
+
 /// The cells of `grid` whose centres lie in `region`, as `(first, past_the_last)` per axis; `None`
 /// when no centre does.
 pub(crate) fn region_cells(grid: &TerrainGrid, region: Rect) -> Option<(UVec2, UVec2)> {
@@ -308,9 +347,11 @@ fn same_grid(a: &TerrainGrid, b: &TerrainGrid) -> bool {
         && (a.origin - b.origin).abs().max_element() <= 1e-3 * b.cell_m
 }
 
-/// A restored region, cut out for the render world: `rows` rows of `width` cells from `(x0, z0)`.
+/// A restored region, cut out for the render world: `rows` rows of `width` cells from `(x0, z0)`
+/// of the snapshot's `grid`, which the live terrain must still have when the cut is written.
 #[derive(Clone, Debug)]
 pub(crate) struct RestoreGpu {
+    pub grid: TerrainGrid,
     pub x0: u32,
     pub z0: u32,
     pub width: u32,
@@ -336,6 +377,7 @@ impl RestoreGpu {
             }
         }
         Some(Self {
+            grid: snap.grid,
             x0: first.x,
             z0: first.y,
             width,
@@ -386,29 +428,23 @@ pub(crate) struct SculptQueue(VecDeque<Edit>);
 /// The request is a plain field of the extracted [`TerrainGpu`] with an epoch; the render world
 /// answers through `stroked` and `restored` only (`AGENTS.md`, pipelined rendering). Nothing is
 /// sent before the terrain's first generation, so an early edit is not lost under the generator.
+/// A restore's grid is checked when it is handed over, against the terrain live then: the queue
+/// outlives a terrain, and the render world writes the cut with the live grid's row stride.
 pub(crate) fn apply_sculpts(
-    mut strokes: MessageReader<SculptTerrain>,
-    mut restores: MessageReader<RestoreTerrain>,
+    mut edits: MessageReader<TerrainEdit>,
     mut queue: ResMut<SculptQueue>,
     gpu: Option<ResMut<TerrainGpu>>,
 ) {
-    // Within one frame every stroke is queued before every restore; across frames the order is kept.
-    for stroke in strokes.read() {
-        match stroke.validate() {
-            Ok(()) => queue.0.push_back(Edit::Stroke(*stroke)),
-            Err(error) => warn!("a SculptTerrain stroke is dropped: {error}"),
-        }
-    }
-    let live = gpu.as_ref().map(|g| g.state.grid);
-    for restore in restores.read() {
-        if let Err(error) = restore.validate() {
-            warn!("a RestoreTerrain is dropped: {error}");
-        } else if live.is_some_and(|grid| !same_grid(&restore.snapshot.grid, &grid)) {
-            warn!(
-                "a RestoreTerrain is dropped: its snapshot was not read from the live terrain's grid"
-            );
-        } else if let Some(cut) = RestoreGpu::new(restore) {
-            queue.0.push_back(Edit::Restore(cut));
+    for edit in edits.read() {
+        match edit {
+            TerrainEdit::Stroke(stroke) => match stroke.validate() {
+                Ok(()) => queue.0.push_back(Edit::Stroke(*stroke)),
+                Err(error) => warn!("a SculptTerrain stroke is dropped: {error}"),
+            },
+            TerrainEdit::Restore(restore) => match restore.validate() {
+                Ok(()) => queue.0.extend(RestoreGpu::new(restore).map(Edit::Restore)),
+                Err(error) => warn!("a RestoreTerrain is dropped: {error}"),
+            },
         }
     }
     let Some(mut gpu) = gpu else {
@@ -420,18 +456,25 @@ pub(crate) fn apply_sculpts(
     {
         return;
     }
-    match queue.0.pop_front() {
-        Some(Edit::Stroke(stroke)) => {
-            gpu.stroke = Some(SculptParamsGpu::new(&stroke, &gpu.state.grid));
-            gpu.stroke_epoch += 1;
-            gpu.changes += 1;
+    while let Some(edit) = queue.0.pop_front() {
+        match edit {
+            Edit::Stroke(stroke) => {
+                gpu.stroke = Some(SculptParamsGpu::new(&stroke, &gpu.state.grid));
+                gpu.stroke_epoch += 1;
+            }
+            Edit::Restore(cut) if !same_grid(&cut.grid, &gpu.state.grid) => {
+                warn!(
+                    "a RestoreTerrain is dropped: its snapshot was not read from the live terrain's grid"
+                );
+                continue;
+            }
+            Edit::Restore(cut) => {
+                gpu.restore = Some(cut);
+                gpu.restore_epoch += 1;
+            }
         }
-        Some(Edit::Restore(cut)) => {
-            gpu.restore = Some(cut);
-            gpu.restore_epoch += 1;
-            gpu.changes += 1;
-        }
-        None => {}
+        gpu.changes += 1;
+        return;
     }
 }
 
@@ -575,5 +618,130 @@ mod tests {
         let mut bad = restore.clone();
         bad.region_m = Rect::new(1.0, 1.0, 1.0, 2.0);
         assert!(bad.validate().is_err());
+    }
+
+    #[test]
+    fn edits_sent_in_one_frame_are_queued_in_the_order_sent() {
+        use bevy::ecs::system::RunSystemOnce;
+        let mut world = World::new();
+        world.init_resource::<Messages<TerrainEdit>>();
+        world.init_resource::<SculptQueue>();
+        let before = TerrainSnapshot {
+            grid: grid(),
+            surface: Arc::from(vec![0.0; 64]),
+            sediment: Arc::from(vec![0.0; 64]),
+            version: 0,
+        };
+        world.write_message(TerrainEdit::from(RestoreTerrain::new(
+            before,
+            Rect::new(-4.0, -4.0, 4.0, 4.0),
+        )));
+        world.write_message(TerrainEdit::from(SculptTerrain::new(
+            Vec2::ZERO,
+            2.0,
+            SculptKind::Raise { amount_m: 2.0 },
+        )));
+        world.run_system_once(apply_sculpts).expect("runs");
+        let queue = world.resource::<SculptQueue>();
+        assert!(
+            matches!(queue.0[0], Edit::Restore(_)),
+            "the restore was sent first"
+        );
+        assert!(matches!(queue.0[1], Edit::Stroke(_)));
+    }
+
+    /// A `TerrainGpu` over `grid`, generated and idle, as the plugin would insert it.
+    fn live_terrain(grid: TerrainGrid) -> TerrainGpu {
+        use crate::terrain::{GenParams, GenerateSource, TerrainParamsGpu, TerrainState};
+        use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64};
+        TerrainGpu {
+            state: TerrainState {
+                entity: Entity::PLACEHOLDER,
+                grid,
+                bedrock: Handle::default(),
+                sediment: Handle::default(),
+                water: Handle::default(),
+                flux: Handle::default(),
+                velocity: Handle::default(),
+                suspended: Handle::default(),
+                transport: Handle::default(),
+                source_map: Handle::default(),
+                thermal_flux: [Handle::default(), Handle::default()],
+                cells: Handle::default(),
+                flow_cells: Handle::default(),
+                height_readback: Handle::default(),
+                leaf_bounds: Handle::default(),
+                readback_size: grid.size,
+                version: Arc::new(AtomicU32::new(1)),
+            },
+            params: TerrainParamsGpu::default(),
+            source: GenerateSource::Procedural(GenParams::default()),
+            changes: 0,
+            packed: Arc::new(AtomicU64::new(0)),
+            generated: Arc::new(AtomicBool::new(true)),
+            stroke: None,
+            stroke_epoch: 0,
+            stroked: Arc::new(AtomicU64::new(0)),
+            restore: None,
+            restore_epoch: 0,
+            restored: Arc::new(AtomicU64::new(0)),
+        }
+    }
+
+    #[test]
+    fn a_restore_from_another_grid_is_dropped_when_it_reaches_the_terrain() {
+        let big = TerrainGrid {
+            origin: Vec2::ZERO,
+            cell_m: 1.0,
+            size: UVec2::splat(128),
+            y0: 0.0,
+        };
+        let snapshot = TerrainSnapshot {
+            grid: big,
+            surface: Arc::from(vec![0.0; 128 * 128]),
+            sediment: Arc::from(vec![0.0; 128 * 128]),
+            version: 0,
+        };
+        let mut world = World::new();
+        world.init_resource::<Messages<TerrainEdit>>();
+        world.init_resource::<SculptQueue>();
+        // A registered system keeps its reader's cursor between runs, as the plugin's does.
+        let apply = world.register_system(apply_sculpts);
+        // Cells 100..120 on both axes, sent while no terrain is live.
+        world.write_message(TerrainEdit::from(RestoreTerrain::new(
+            snapshot.clone(),
+            Rect::new(100.0, 100.0, 120.0, 120.0),
+        )));
+        world.run_system(apply).expect("runs");
+        // A 64² terrain spawns: the cut must not reach its layers.
+        world.insert_resource(live_terrain(TerrainGrid {
+            size: UVec2::splat(64),
+            ..big
+        }));
+        world.run_system(apply).expect("runs");
+        assert!(world.resource::<TerrainGpu>().restore.is_none());
+        assert!(world.resource::<SculptQueue>().0.is_empty());
+
+        // A rebuild while the restore waits behind a stroke: checked against the first terrain,
+        // popped on the second.
+        world.insert_resource(live_terrain(big));
+        world.write_message(TerrainEdit::from(SculptTerrain::new(
+            Vec2::splat(10.0),
+            2.0,
+            SculptKind::Raise { amount_m: 1.0 },
+        )));
+        world.write_message(TerrainEdit::from(RestoreTerrain::new(
+            snapshot,
+            Rect::new(100.0, 100.0, 120.0, 120.0),
+        )));
+        world.run_system(apply).expect("runs");
+        assert!(world.resource::<TerrainGpu>().stroke.is_some());
+        world.insert_resource(live_terrain(TerrainGrid {
+            size: UVec2::splat(64),
+            ..big
+        }));
+        world.run_system(apply).expect("runs");
+        assert!(world.resource::<TerrainGpu>().restore.is_none());
+        assert!(world.resource::<SculptQueue>().0.is_empty());
     }
 }

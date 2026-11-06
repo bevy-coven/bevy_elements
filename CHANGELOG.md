@@ -1,14 +1,14 @@
 ## [Unreleased]
 
-### Fixed
-
-- **A jump of the clock no longer leaves the picture over-exposed (#56).** Setting `WorldClock::hour` (or the date) by more than one game minute between frames is now a cut: every `ElementsCamera` with `auto_exposure` takes the new hour's exposure at once instead of easing in over `EXPOSURE_TAU_S`, and the followed camera's sky probe drops its cloud history and recomposes, so neither carries the old hour's light into the new one. The clock's own advance at any `time_scale` is not a jump. `tests/gpu_clock_jump.rs` jumps noon → 23:00 and 23:00 → noon and holds every frame of the next 30 s within 20 % of the settled picture.
-- **Removing or despawning a dressed `ElementsCamera` no longer panics.** Removing the component undoes the dressing (`41407d6`); every command `undress_camera` queues is `queue_silenced`, and a camera on its way out is not dressed again, so a camera despawned in the same frame no longer closes the app with `Entity despawned` (`94e36d9`, `1d180c6`, `5d71dbd`, `0778a62`; bevy_grimoire 2026-11-03).
-- **`perlin3_periodic` and `fbm3_periodic` were each declared twice in `noise.wesl`** (`0a285de`).
-
 ### Changed
 
-- README: the editor is the Cauldron; the book's section is "Use it in the Cauldron" (`1787e7b`).
+- **Breaking: strokes and restores are one message, `TerrainEdit` (#54).** `SculptTerrain` and `RestoreTerrain` are no longer `Message`s; send either as `TerrainEdit::Stroke(..)` / `TerrainEdit::Restore(..)` (both convert with `.into()`) through `MessageWriter<TerrainEdit>`. Two message types carry no order between them, so within one frame every stroke ran ahead of every restore: an undo followed by a redo in the same frame, or an edit log replayed in one system, ended with the restore erasing the strokes sent after it. Edits now run in the order sent, within a frame and across frames, one per frame. Migration: `MessageWriter<SculptTerrain>` → `MessageWriter<TerrainEdit>` and `w.write(stroke)` → `w.write(stroke.into())`; the same for `RestoreTerrain`.
+
+### Fixed
+
+- **A `RestoreTerrain` is checked against the terrain live when its turn comes (#52).** The grid check ran only when the message was read, and only if a terrain was live then: a restore sent before the terrain spawned, or one still queued when the terrain was rebuilt at another resolution, was written with the new terrain's row stride and no bounds check (past the layers' end on a smaller grid, a wgpu validation error that stops the render world; onto the wrong cells on a larger one). The cut now keeps its snapshot's grid and is dropped with a warning when it reaches a terrain with another grid.
+- **`ProceduralTerrain::sample_surface` samples features finer than a cell at the cell, as the kernel does (#53).** The kernel uses `max(feature_size_m, cell_m)` as the base wavelength; the CPU generator used the raw feature size, so a preset previewed on a grid coarser than its features (`dunes`, 300 m, at 312.5 m cells) gave a different surface from the drawn one, and `feature_size_m = 0` gave NaN in every cell. Both now share one function.
+- **Rainbows are drawn by rain, not by falling snow (#51).** The bow's gate, drop size and curtain took `Weather::precipitation_mm_h`, the water equivalent of rain and snow together, so a full double bow stood over falling snow opposite a low sun, and sleet drew the bow of its whole rate. The gate and drop size now take the rain, `precipitation_mm_h · (1 − snow_fraction())`, and the curtain shares its light between rain and snow by their extinction (the crate's laws, snow some twenty to thirty times as opaque per mm/h), so only the rain's part makes the bow. Measured on the Apple M1 Max (`tests/gpu_rainbow.rs`, 5 mm/h, sun 21.8°): at −5 °C the primary's band adds 0 (was 0.067 on a sky of 0.59, the frame now byte-identical with the bow off); at 0.5 °C (half snow) 0.0091, an eighth of the rain's 0.071 (was 0.068); rain is unchanged (byte-identical frame). The bow fades continuously through the sleet band instead of vanishing at −1 °C. `CloudParams` gains `shower` (a uniform tail; no API change). Assumed decision on #51. `docs/research/rainbow.md` Deviations 4 and 5.
 
 ## [0.7.8] - 2026-10-31
 
