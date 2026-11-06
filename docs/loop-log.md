@@ -5530,3 +5530,16 @@ Host: the Mac (Metal; no captures, no GPU timestamps, so no benchmark). Issues r
 3. A rainbow in the still sea's reflection and over terrain; fogbow, moonbow.
 4. Capture the bow on `big` and measure its cost.
 5. #41 remainder (`ground_look_at` GPU fixture, `FootprintPressure`); #39 `paths_resist_prints`.
+
+## Hand-driven pass — 2026-11-06 — four review-pass bugs: #54, #53, #52, #51
+
+Hand-driven, owner request 2026-11-06, host mac_air (Apple M5, Metal). Not a loop pass: no loop bookkeeping, no release (#56's fixer on big takes the next one; the 6 h spacing rule).
+
+- **Order**: the four open bugs from the owner's 2026-10-30 review, oldest-numbered first as the owner listed them; #56 (exposure after a clock jump) skipped on the owner's word: another agent fixes and releases it.
+- **#54, edits out of order within a frame**: reproduced (`terrain::sculpt::tests::edits_sent_in_one_frame_are_queued_in_the_order_sent`: the stroke at `queue[0]`). Fix: one message, `TerrainEdit { Stroke, Restore }`. Breaking, CHANGELOG `Changed` with the migration. `docs/research/terrain-restore.md` Deviation 1.
+- **#52, a restore unchecked when no terrain is live or across a rebuild**: reproduced (`a_restore_from_another_grid_is_dropped_when_it_reaches_the_terrain`: a 128² cut of cells 100..120 handed to a 64² terrain). Fix: `RestoreGpu` keeps the snapshot's grid; the one `same_grid` check runs when the edit is popped. Deviation 2.
+- **#53, `sample_surface` with features finer than a cell**: reproduced (the issue's test in `tests/terrain_surface.rs`: both assertions failed). Fix: `terrain::model::sampled_feature_m` shared by the kernel's params and the CPU generator. `docs/research/terrain-surface-cpu.md` Deviation 2.
+- **#51, rainbows in falling snow**: reproduced on `main` (the issue's `falling_snow_draws_no_bow`: `w = 0.8215544`). The fix existed on `origin/loop/iter-105` (iterations 104-105, never merged, assumed decision (b) on the issue); cherry-picked its five commits, the README line ported to `docs/guide/sky-weather.md`.
+- **Red log** of the four failing tests: `~/coven-wt/bevy_elements.red.log` on mac_air (not committed).
+- **Issue comments** for the orchestrator: `~/coven-wt/bevy_elements.COMMENTS.md` on mac_air (gh not logged in here).
+- **Not released**: rides in the next release (#56's).
